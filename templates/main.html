@@ -4,44 +4,45 @@
 
 <html lang="pt-br">
 
-<head>
+    <head>
 
-    <meta charset="UTF-8">
-    <title>Fazenda 3D</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../static/css/style.css">
+        <title>Fazenda 3D</title>
 
-    {% block head %}
-    {% endblock %}
-
-</head>
-
-<body>
-
-    <!-- Menu-->
-    <div id="sidebar-upper">
-    </div>
-
-
-    <div class="container">
-
-        {% block content %}
-        <!--Página a ser carregada!-->
+        {% block head %}
         {% endblock %}
 
-    </div>
+    </head>
 
-    <footer>
+    <body>
 
-        <div id="copyright">
-            <h4>&copy; BRIDGE LAB - 2024</h4>
-            <h4>DESENVOLVIDO POR GUILHERME FROES</h4>
+        <!-- Menu-->
+        <div id="sidebar-upper">
         </div>
-    
-    </footer>
 
-    <script></script>
-    {% block script %}
-    {% endblock %}
-    
-</body>
+
+        <div class="container">
+
+            {% block content %}
+            <!--Página a ser carregada!-->
+            {% endblock %}
+
+        </div>
+
+        <footer class="">
+
+            <div id="copyright">
+                <h4>&copy; BRIDGE LAB - 2024</h4>
+                <h4>DESENVOLVIDO POR GUILHERME FROES</h4>
+            </div>
+        
+        </footer>
+
+        <script></script>
+        {% block script %}
+        {% endblock %}
+        
+    </body>
 
 </html>
