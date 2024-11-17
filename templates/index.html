@@ -10,12 +10,75 @@
  <!-- corpo do Página -->
 {% block content %}
 
-    <h1>Olá mundo!</h1>
+    <h1>3D Farm Dashboard</h1>
+
+    <button type="button">Adicionar impressora</button>
+
+    <br>
+    <br>
+
+    <div id="printer-container" class="impressora">
+    
+        <div class="conteudo">
+
+            <h2 class="nomeImpressora">Graber i3</h2> <!--nome da impressora-->
+
+            <!-- Exibir o feed da câmera -->
+            <img src="{{ camera_stream_url }}" alt="Camera Stream" class="Camera">
+
+            <!-- Exibir o estado da impressora -->
+            <ul>
+
+                <li><strong>Status:</strong> <span id="printer-status">{{ printer_state.state.text }}</span></li>
+
+                <li><strong>Mesa:</strong> 
+                    {{ printer_state.temperature.bed.actual }}°C - {{ printer_state.temperature.bed.target }}°C
+                </li>
+
+                <li><strong>Bico:</strong> 
+                    {{ printer_state.temperature.tool0.actual }}°C - {{ printer_state.temperature.tool0.target }}°C
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
 
 {% endblock %}
 
 
  <!-- Scripts -->
 {% block script %}
+
+    <script>
+        function updatePrinterState() {
+            fetch('/printer_state') // Endpoint para obter apenas o estado da impressora
+                .then(response => response.json())
+                .then(data => {
+                    const printerContainer = document.getElementById('printer-container');
+                    const printerStatus = document.getElementById('printer-status');
+
+                    // Atualiza o texto do status
+                    printerStatus.textContent = data.state.text;
+
+                    // Remove classes antigas
+                    printerContainer.classList.remove('operational', 'printing', 'error');
+
+                    // Adiciona a classe com base no estado atual
+                    if (data.state.text === 'Operational') {
+                        printerContainer.classList.add('operational');
+                    } else if (data.state.flags.printing) {
+                        printerContainer.classList.add('printing');
+                    } else {
+                        printerContainer.classList.add('error');
+                    }
+                })
+                .catch(error => console.error('Erro ao atualizar estado:', error));
+        }
+
+        // Atualiza o estado a cada 5 segundos
+        setInterval(updatePrinterState, 1500);
+    </script>
 
 {% endblock %}
