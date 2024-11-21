@@ -1,26 +1,28 @@
-# home.py
-
-import requests
 from flask import render_template
-from printer_state import get_printer_status  # Importa a função de printer_state.py
-
-# Configurações do OctoPrint
-CAMERA_STREAM_URL = "http://192.168.1.8:8080/?action=stream"
+from printer_state import get_all_printer_statuses  # Função para obter o status de todas as impressoras
 
 def home():
     """
-    Exibe a página principal com o feed da câmera e o estado da impressora.
+    Exibe a página principal com o feed da câmera e o estado das impressoras.
     """
     try:
-        # Obter o estado da impressora usando a função get_printer_status
-        printer_state = get_printer_status()
+        # Obtém o estado de todas as impressoras cadastradas no banco de dados
+        printer_states, disconnected_printers = get_all_printer_statuses()
 
-        # Renderizar a página HTML
+        # Verifica se a lista de impressoras está vazia
+        if not printer_states:
+            # Se não houver impressoras, mostra uma mensagem na página principal
+            return render_template('index.html', error_message="Nenhuma impressora cadastrada.", disconnected_printers=disconnected_printers)
+        
+        # Caso contrário, renderiza a página com os dados das impressoras
         return render_template(
             'index.html',
-            printer_state=printer_state,
-            camera_stream_url=CAMERA_STREAM_URL
+            printer_states=printer_states,
+            disconnected_printers=disconnected_printers,
+            error_message=None  # Garantindo que a variável de erro esteja vazia
         )
-    except requests.exceptions.RequestException as e:
-        # Exibe um erro na página em caso de falha
-        return render_template('error.html', error_message=str(e)), 500
+
+    except Exception as e:
+        # Em caso de erro, loga o erro e renderiza a página com a mensagem de erro
+        print(f"Erro ao carregar a página principal: {e}")
+        return render_template('index.html', error_message="Erro ao carregar as impressoras.", disconnected_printers=disconnected_printers), 500
