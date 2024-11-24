@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from home import home  # Importa a função home do arquivo home.py
 from printer_state import get_printer_status, get_all_printer_statuses  # Importa a função get_printer_status
 from database import create_tables, add_printer, get_printers
@@ -35,6 +35,9 @@ def get_all_printer_statuses_route():
         "disconnected_printers": disconnected_printers
     })
 
+@app.route('/adicionaimpressora', methods=['GET'])
+def adiciona_impressora():
+    return render_template('adicionaimpressora.html')
 
 
 @app.route('/add_printer', methods=['POST'])

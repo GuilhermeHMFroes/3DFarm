@@ -1,47 +1,58 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Modal Script
     var modal = document.getElementById("myModal");
+    var modalContent = document.getElementById("modalContent");
     var btn = document.getElementById("myBtn");
-    var span = document.getElementsByClassName("close")[0];
 
+    // Abrir o modal e carregar o conteúdo
     btn.onclick = function () {
-        modal.style.display = "block";
+        fetch("/adicionaimpressora")
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Erro ao carregar o modal");
+                }
+                return response.text();
+            })
+            .then((data) => {
+                modalContent.innerHTML = data; // Insere o conteúdo no modal
+                modal.style.display = "block";
+
+                // Adicionar eventos ao formulário carregado dinamicamente
+                const form = document.getElementById("addPrinterForm");
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(form);
+                    fetch("/add_printer", {
+                        method: "POST",
+                        body: formData,
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            alert(data.message);
+                            modal.style.display = "none";
+                            location.reload();
+                        })
+                        .catch((error) =>
+                            console.error("Erro ao adicionar impressora:", error)
+                        );
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                alert("Não foi possível carregar o modal.");
+            });
     };
-    span.onclick = function () {
-        modal.style.display = "none";
-    };
+
+    // Fecha o modal ao clicar no "X" ou fora do modal
     window.onclick = function (event) {
-        if (event.target == modal) {
+        if (event.target.classList.contains("close") || event.target === modal) {
             modal.style.display = "none";
         }
     };
 
-    // Form submission for adding printer
-    document
-        .getElementById("addPrinterForm")
-        .addEventListener("submit", function (event) {
-            event.preventDefault(); // Prevent form from submitting normally
-            var formData = new FormData(this);
-
-            fetch("/add_printer", {
-                method: "POST",
-                body: formData,
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.message) {
-                        alert(data.message);
-                        modal.style.display = "none";
-                        location.reload(); // Reload the page to show the newly added printer
-                    }
-                })
-                .catch((error) =>
-                    console.error("Erro ao adicionar impressora:", error)
-                );
-        });
-
     // Variável para armazenar os dados das impressoras
-    let printerData = []; // Declarar uma vez, no escopo global
+    let printerData = [];
 
     // Função para buscar o estado de todas as impressoras
     function fetchPrinterStates() {
@@ -63,15 +74,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Função para atualizar o estado de uma impressora específica
     function updatePrinterState(printer) {
-        const printerId = printer.printer.ip; // ID ou IP da impressora
+        const printerId = printer.printer.ip;
 
         // Seleciona a div principal da impressora
         const printerDiv = document.getElementById(`printer-${printerId}`);
         if (printerDiv) {
-            // Remove as classes existentes antes de adicionar as novas
             printerDiv.classList.remove("operational", "printing");
 
-            // Adiciona as classes com base no estado
             const printerState = printer.state.state.text || "Desconhecido";
             const isOperational = printer.state.state.flags.operational;
             if (isOperational) {
