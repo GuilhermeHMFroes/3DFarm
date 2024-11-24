@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Modal Script
-    var modal = document.getElementById("myModal");
+    var modal = document.getElementById("modalAddPrinter");
     var modalContent = document.getElementById("modalContent");
-    var btn = document.getElementById("myBtn");
+    var btn = document.getElementById("addprinter");
 
     // Abrir o modal e carregar o conteúdo
     btn.onclick = function () {
