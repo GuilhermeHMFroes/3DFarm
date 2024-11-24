@@ -4,162 +4,85 @@
 {% endblock %}
 
 {% block content %}
-    <h1>3D Farm Dashboard</h1>
+<h1>3D Farm Dashboard</h1>
 
-    <button id="myBtn" type="button">Adicionar impressora</button>
-    <button id="gerenciarImpressora" type="button">Gerenciar Impressoras</button>
+<button id="myBtn" type="button">Adicionar impressora</button>
+<button id="gerenciarImpressora" type="button">Gerenciar Impressoras</button>
 
-    <br><br><br>
+<br><br><br>
 
-    <!-- The Modal -->
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Cadastrar Impressora</h2>
+<!-- The Modal -->
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Cadastrar Impressora</h2>
 
-            <form id="addPrinterForm">
-                <label for="ip">IP do dispositivo: </label>
-                <input type="text" id="ip" name="ip" required>
-                <br><br>
+        <form id="addPrinterForm">
+            <label for="ip">IP do dispositivo: </label>
+            <input type="text" id="ip" name="ip" required>
+            <br><br>
 
-                <label for="API">Chave da Api: </label>
-                <input type="text" id="API" name="API" required>
-                <br><br>
+            <label for="API">Chave da Api: </label>
+            <input type="text" id="API" name="API" required>
+            <br><br>
 
-                <label for="port">Porta OctoPrint: </label>
-                <input type="text" id="port" name="port" value="5000" required>
-                <br><br>
+            <label for="port">Porta OctoPrint: </label>
+            <input type="text" id="port" name="port" value="5000" required>
+            <br><br>
 
-                <label for="webcam">Porta webcam: </label>
-                <input type="text" id="webcam" name="webcam" required>
-                <br><br>
+            <label for="webcam">Porta webcam: </label>
+            <input type="text" id="webcam" name="webcam" required>
+            <br><br>
 
-                <label for="nome">Nome da impressora: </label>
-                <input type="text" id="nome" name="nome" required>
-                <br><br>
+            <label for="nome">Nome da impressora: </label>
+            <input type="text" id="nome" name="nome" required>
+            <br><br>
 
-                <button type="submit">Adicionar impressora</button>
-            </form>
+            <button type="submit">Adicionar impressora</button>
+        </form>
+
+    </div>
+</div>
+
+{% if error_message %}
+<div class="alert alert-warning">{{ error_message }}</div>
+{% else %}
+<div id="impressoras">
+    {% for printer_state in printer_states %}
+    <div class="impressora" id="printer-{{ printer_state['printer']['ip'] }}">
+        <div class="conteudo">
+            <h2 class="nomeImpressora"> {{ printer_state['printer']['nome'] }}</h2> <!-- Nome da impressora -->
+
+            <!-- Exibir o feed da câmera -->
+            <img class="camera"
+                src="http://{{ printer_state['printer']['ip']}}:{{printer_state['printer']['webcam_port']}}"
+                alt="Aqui deveria estar a imagem">
+
+            <!-- Exibir o estado da impressora -->
+            <ul>
+
+                <li id="printer-status-{{ printer_state['printer']['ip'] }}">Status: {{
+                    printer_state['state']['state']['text'] }}</li>
+                <li id="bed-temp-{{ printer_state['printer']['ip'] }}">Cama: {{
+                    printer_state['state']['temperature']['bed']['actual'] }}°C</li>
+                <li id="tool-temp-{{ printer_state['printer']['ip'] }}">Bico: {{
+                    printer_state['state']['temperature']['tool0']['actual'] }}°C</li>
+
+            </ul>
 
         </div>
     </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-    {% if error_message %}
-        <div class="alert alert-warning">{{ error_message }}</div>
-    {% else %}
-        <div id="impressoras">
-            {% for printer_state in printer_states %}
-            <div class="impressora" id="printer-{{ printer_state['printer']['ip'] }}">
-                <div class="conteudo">
-                    <h2 class="nomeImpressora"> {{ printer_state['printer']['nome'] }}</h2> <!-- Nome da impressora -->
+{% if disconnected_printers %}
+<h3>Impressoras com erro:</h3>
+<ul>
+    {% for printer in disconnected_printers %}
+    <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
-                    <!-- Exibir o feed da câmera -->
-                    <img class="camera" src="http://{{ printer_state['printer']['ip']}}:{{printer_state['printer']['webcam_port']}}" alt="Aqui deveria estar a imagem">
-
-                    <!-- Exibir o estado da impressora -->
-                    <ul>
-                        <li><strong>Status:</strong>
-                            <span id="printer-status-{{ printer_state['printer']['ip'] }}">
-                                {{ printer_state['state']['state']['text'] }}
-                            </span>
-                        </li>
-                        <li><strong>Mesa:</strong>
-                            {{ printer_state['state']['temperature']['bed']['actual'] }}°C - {{ printer_state['state']['temperature']['bed']['target'] }}°C
-                        </li>
-                        <li><strong>Bico:</strong>
-                            {{ printer_state['state']['temperature']['tool0']['actual'] }}°C - {{ printer_state['state']['temperature']['tool0']['target'] }}°C
-                        </li>
-                    </ul>
-
-                    <p>{{printer_state}}</p>
-
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    {% if disconnected_printers %}
-        <h3>Impressoras com erro:</h3>
-        <ul>
-            {% for printer in disconnected_printers %}
-                <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-{% endblock %}
-
-{% block script %}
-<script>
-    // Modal Script
-    var modal = document.getElementById("myModal");
-    var btn = document.getElementById("myBtn");
-    var span = document.getElementsByClassName("close")[0];
-    btn.onclick = function() {
-        modal.style.display = "block";
-    }
-    span.onclick = function() {
-        modal.style.display = "none";
-    }
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-
-    // Form submission for adding printer
-    document.getElementById("addPrinterForm").addEventListener("submit", function(event) {
-        event.preventDefault();  // Prevent form from submitting normally
-        var formData = new FormData(this);
-
-        fetch('/add_printer', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert(data.message);
-                modal.style.display = "none";
-                location.reload();  // Reload the page to show the newly added printer
-            }
-        })
-        .catch(error => console.error('Erro ao adicionar impressora:', error));
-    });
-
-    // Atualiza as Bordas
-    function updatePrinterState() {
-        fetch('/printer_state') // Endpoint para obter apenas o estado da impressora
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(printer_state => {
-                    var printerContainer = document.getElementById('printer-' + printer_state.printer.ip);
-                    var printerStatus = document.getElementById('printer-status-' + printer_state.printer.ip);
-
-                    if (printerContainer && printerStatus) {
-                        // Atualiza o texto do status
-                        printerStatus.textContent = printer_state.state.state.text;
-
-                        // Remove classes antigas
-                        printerContainer.classList.remove('operational', 'printing', 'error');
-
-                        // Adiciona a classe com base no estado atual
-                        if (printer_state.state.state.text === 'Operational') {
-                            printerContainer.classList.add('operational');
-                        } else if (printer_state.state.state.flags.printing) {
-                            printerContainer.classList.add('printing');
-                        } else {
-                            printerContainer.classList.add('error');
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error('Erro ao atualizar estado:', error));
-    }
-
-
-    // Atualiza o estado a cada 5 segundos
-    setInterval(updatePrinterState, 1500);
-</script>
 {% endblock %}
