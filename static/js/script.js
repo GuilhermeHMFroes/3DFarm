@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Modal Script
+    // Modal Script Add Printer
     var modal = document.getElementById("modalAddPrinter");
     var modalContent = document.getElementById("modalContent");
     var btn = document.getElementById("addprinter");
@@ -44,12 +44,127 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     };
 
+    // Modal Script Printer Manager
+    const managePrintersButton = document.getElementById("gerenciarImpressora");
+    const modalManage = document.getElementById("modalManagePrinters");
+    const modalContentManage = document.getElementById("modalContentManage");
+
     // Fecha o modal ao clicar no "X" ou fora do modal
     window.onclick = function (event) {
-        if (event.target.classList.contains("close") || event.target === modal) {
-            modal.style.display = "none";
+        if (event.target.classList.contains("close") || event.target === modal || event.target === modalManage) {
+            modal.style.display = "none";  // Fecha o modal de adicionar impressora
+            modalManage.style.display = "none";  // Fecha o modal de gerenciar impressoras
+            location.reload();  // Recarrega a página principal ao fechar o modal
         }
     };
+
+    // Abrir o modal e carregar a lista de impressoras
+    managePrintersButton.onclick = function () {
+        fetch("/manage_printers") // Requisição para pegar a lista de impressoras
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Erro ao carregar lista de impressoras");
+                }
+                return response.text();  // Retorna o HTML do modal
+            })
+            .then((html) => {
+                modalContentManage.innerHTML = html; // Atualiza o conteúdo do modal com o HTML
+                modalManage.style.display = "block"; // Exibe o modal
+                attachDeleteHandlers(); // Anexa eventos para remover impressoras
+                attachEditHandlers(); // Adiciona eventos para editar impressoras
+            })
+            .catch((error) =>
+                console.error("Erro ao carregar lista de impressoras:", error)
+            );
+    };
+
+    // Função para adicionar os manipuladores de evento para editar impressoras
+    function attachEditHandlers() {
+        const editButtons = document.querySelectorAll(".editPrinter");
+        editButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const printerIp = this.getAttribute("data-ip");
+                const printerNome = this.getAttribute("data-nome");
+                const printerPort = this.getAttribute("data-port");
+                const printerApi = this.getAttribute("data-api");
+                const printerWebcam = this.getAttribute("data-webcam");
+    
+                // Exibe o formulário de edição no modal
+                const editForm = document.getElementById("editPrinterForm");
+                editForm.style.display = "block";
+    
+                // Preenche os campos do formulário com os dados da impressora
+                document.getElementById("editNome").value = printerNome;
+                document.getElementById("editApi").value = printerApi;
+                document.getElementById("editPort").value = printerPort;
+                document.getElementById("editWebcam").value = printerWebcam;
+                document.getElementById("editIp").value = printerIp;
+                
+                // Adiciona o evento para salvar as alterações
+                const form = document.getElementById("editPrinter");
+                form.onsubmit = function (event) {
+                    event.preventDefault();
+    
+                    const formData = {
+                        ip: form["ip"].value,
+                        nome: form["nome"].value,
+                        api_key: form["api_key"].value,
+                        port: form["port"].value,
+                        webcam_port: form["webcam_port"].value
+                    };
+    
+                    fetch("/update_printer", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(formData),
+                    })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        alert(data.message);
+                        modalManage.style.display = "none";  // Fecha o modal de gerenciamento
+                        location.reload(); // Recarrega a página para mostrar a lista atualizada
+                    })
+                    .catch((error) =>
+                        console.error("Erro ao atualizar impressora:", error)
+                    );
+                };
+            });
+        });
+    }
+    
+
+    // Função para adicionar os manipuladores de evento para remover impressoras
+    function attachDeleteHandlers() {
+        const deleteButtons = document.querySelectorAll(".deletePrinter");
+        deleteButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const printerIp = this.getAttribute("data-ip");
+                if (confirm(`Deseja remover a impressora com IP ${printerIp}?`)) {
+                    fetch(`/remove_printer`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ ip: printerIp }),
+                    })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.message) {
+                            alert(data.message);  // Exibe a mensagem de sucesso
+                            location.reload(); // Recarrega a página para mostrar a lista atualizada
+                        } else {
+                            alert(data.error || "Erro ao remover impressora.");
+                        }
+                    })
+                    .catch((error) =>
+                        console.error("Erro ao remover impressora:", error)
+                    );
+                }
+            });
+        });
+    }
 
     // Variável para armazenar os dados das impressoras
     let printerData = [];

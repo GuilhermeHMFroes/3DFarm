@@ -1,0 +1,38 @@
+<div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Gerenciar Impressoras</h2>
+    <ul>
+        {% for printer in printers %}
+        <li>
+            <strong>{{ printer['nome'] }}</strong> - IP: {{ printer['ip'] }} - Porta: {{ printer['port'] }}
+            <button class="deletePrinter" data-ip="{{ printer['ip'] }}">Remover</button>
+            <button class="editPrinter" data-ip="{{ printer['ip'] }}" 
+                    data-nome="{{ printer['nome'] }}" 
+                    data-port="{{ printer['port'] }}"
+                    data-webcam="{{ printer['webcam_port'] }}"
+                    data-api="{{ printer['api_key'] }}">Editar</button>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Formulário de Edição da Impressora -->
+    <div id="editPrinterForm" style="display:none;">
+        <h3>Editar Impressora</h3>
+        <form id="editPrinter">
+            <label for="editNome">Nome:</label>
+            <input type="text" id="editNome" name="nome" required><br><br>
+
+            <label for="editApi">API Key:</label>
+            <input type="text" id="editApi" name="api_key" required><br><br>
+
+            <label for="editPort">Porta:</label>
+            <input type="text" id="editPort" name="port" required><br><br>
+
+            <label for="editWebcam">Porta Webcam:</label>
+            <input type="text" id="editWebcam" name="webcam_port" required><br><br>
+
+            <input type="hidden" id="editIp" name="ip">
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
+</div>
