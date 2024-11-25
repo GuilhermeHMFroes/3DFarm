@@ -5,3 +5,10 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template('index.html')"""
+
+8080/?action=stream
+chave api tvbox = d9uxG2QTwj86Ugjc8ivcDWKO_Ho0vm5UinAo_s0IpXA
+
+
+5001/mjpeg
+chave api telefone = 5C2A6CF4AC2C45D7A5E4EAFF469D0385

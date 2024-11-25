@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 
-<!-- main.html = index -->
-
 <html lang="pt-br">
 
     <head>
 
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="../static/css/style.css">
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
         <title>Fazenda 3D</title>
 
         {% block head %}
@@ -30,6 +32,7 @@
 
         </div>
 
+        <!--
         <footer class="">
 
             <div id="copyright">
@@ -38,6 +41,7 @@
             </div>
         
         </footer>
+        -->
 
         <script></script>
         {% block script %}

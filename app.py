@@ -1,30 +1,99 @@
-#chave api: d9uxG2QTwj86Ugjc8ivcDWKO_Ho0vm5UinAo_s0IpXA
-
-# app.py
-from flask import Flask, jsonify
-
+from flask import Flask, jsonify, request, render_template
 from home import home  # Importa a função home do arquivo home.py
-from printer_state import get_printer_status  # Importa a função get_printer_status
+from printer_state import get_all_printer_statuses, get_printer_status
+from database import create_tables
+from printer_manager import get_all_printers, add_printer, remove_printer, update_printer
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
+# Cria as tabelas no banco de dados ao iniciar a aplicação
+create_tables()
+
+@app.route('/')
 def home_route():
-    return home()  # Chama a função home do arquivo home.py
+    """Rota inicial."""
+    return home()
+
+@app.route('/get_all_printer_statuses', methods=['GET'])
+def get_all_printer_statuses_route():
+    """Rota para obter o estado de todas as impressoras."""
+    printer_statuses, disconnected_printers = get_all_printer_statuses()
+    return jsonify({
+        "printer_states": printer_statuses,
+        "disconnected_printers": disconnected_printers
+    })
 
 @app.route('/printer_state', methods=['GET'])
 def printer_state_route():
-    """
-    Retorna o estado da impressora como JSON para ser consumido pelo JavaScript.
-    """
-    printer_status = get_printer_status()  # Obtém o estado da impressora
+    ip = request.args.get('ip')
+    api_key = request.args.get('api_key')
+
+    if not ip or not api_key:
+        return jsonify({"error": "Os parâmetros 'ip' e 'api_key' são obrigatórios."}), 400
+
+    printer_status = get_printer_status(ip, api_key)
 
     if "error" in printer_status:
-        return jsonify({"error": printer_status["error"]}), 500
+        return jsonify({"error": printer_status["error"], "details": printer_status}), 500
 
     return jsonify(printer_status)
+
+@app.route('/adicionaimpressora', methods=['GET'])
+def adiciona_impressora():
+    """Rota para carregar o template de adicionar impressora."""
+    return render_template('adicionaimpressora.html')
+
+@app.route('/add_printer', methods=['POST'])
+def add_printer_route():
+    """Rota para adicionar uma nova impressora."""
+    ip = request.form['ip']
+    port = request.form['port']
+    webcam_port = request.form['webcam']
+    api_key = request.form['API']
+    nome = request.form['nome']
+
+    success = add_printer(ip, api_key, port, webcam_port, nome)
+
+    if success:
+        return jsonify({"message": "Impressora adicionada com sucesso!"})
+    return jsonify({"message": "Erro ao adicionar impressora."}), 500
+
+@app.route('/manage_printers', methods=['GET'])
+def manage_printers_route():
+    """Rota para carregar o template de gerenciamento de impressoras."""
+    printers = get_all_printers()
+    return render_template('manage_printers.html', printers=printers)
+
+@app.route('/remove_printer', methods=['POST'])
+def remove_printer_route():
+    """Rota para remover uma impressora."""
+    data = request.get_json()
+    ip = data.get("ip")
+
+    if not ip:
+        return jsonify({"error": "Parâmetro 'ip' é obrigatório."}), 400
+
+    remove_printer(ip)
+
+    return jsonify({"message": "Impressora removida com sucesso!"})
+
+@app.route('/update_printer', methods=['POST'])
+def update_printer_route():
+    """Rota para atualizar informações de uma impressora."""
+    data = request.get_json()
+    ip = data.get("ip")
+    api_key = data.get("api_key")
+    port = data.get("port")
+    webcam_port = data.get("webcam_port")
+    nome = data.get("nome")
+
+    if not ip:
+        return jsonify({"error": "Parâmetro 'ip' é obrigatório."}), 400
+
+    update_printer(ip, api_key, port, webcam_port, nome)
+
+    return jsonify({"message": "Impressora atualizada com sucesso!"})
 
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
-
