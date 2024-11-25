@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, request, render_template
 from home import home  # Importa a função home do arquivo home.py
-from printer_state import get_all_printer_statuses, get_printer_status
+from printer_state import get_all_printer_statuses, get_printer_status # Status das impressoras
 from database import create_tables
-from printer_manager import get_all_printers, add_printer, remove_printer, update_printer
+from printer_manager import get_all_printers, add_printer, remove_printer, update_printer # Gerenciador de Imprpessoras
+from upload import handle_file_upload  # Importa a função de upload
 
 app = Flask(__name__)
 
@@ -94,6 +95,11 @@ def update_printer_route():
 
     return jsonify({"message": "Impressora atualizada com sucesso!"})
 
+# Rota para upload de arquivos
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    """Rota para realizar o upload do arquivo."""
+    return handle_file_upload()
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

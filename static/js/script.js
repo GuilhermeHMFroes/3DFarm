@@ -88,11 +88,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 const printerPort = this.getAttribute("data-port");
                 const printerApi = this.getAttribute("data-api");
                 const printerWebcam = this.getAttribute("data-webcam");
-    
+
                 // Exibe o formulário de edição no modal
                 const editForm = document.getElementById("editPrinterForm");
                 editForm.style.display = "block";
-    
+
                 // Preenche os campos do formulário com os dados da impressora
                 document.getElementById("editNome").value = printerNome;
                 document.getElementById("editApi").value = printerApi;
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("editPrinter");
                 form.onsubmit = function (event) {
                     event.preventDefault();
-    
+
                     const formData = {
                         ip: form["ip"].value,
                         nome: form["nome"].value,
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         port: form["port"].value,
                         webcam_port: form["webcam_port"].value
                     };
-    
+
                     fetch("/update_printer", {
                         method: "POST",
                         headers: {
@@ -245,4 +245,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Chamar a função para carregar os dados ao inicializar a página
     fetchPrinterStates();
+
+    // Elementos da página
+    const uploadArea = document.getElementById("uploadArea");
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+
+    // Função para enviar o arquivo para o servidor
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/upload", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Exibe o arquivo na lista após o upload
+                const fileItem = document.createElement("div");
+                fileItem.classList.add("file-item");
+                fileItem.textContent = data.fileName;
+                fileList.appendChild(fileItem);
+            } else {
+                alert("Erro ao enviar o arquivo.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao fazer upload:", error);
+            alert("Erro ao fazer upload.");
+        });
+    }
+
+    // Eventos para arrastar e soltar
+    uploadArea.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        uploadArea.style.borderColor = "#4CAF50"; // Muda a cor da borda durante o arraste
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "#ccc"; // Restaura a cor da borda quando o item sai da área
+    });
+
+    uploadArea.addEventListener("drop", (event) => {
+        event.preventDefault();
+        uploadArea.style.borderColor = "#ccc"; // Restaura a cor da borda após o item ser solto
+
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
+    // Clique para abrir o seletor de arquivos
+    uploadArea.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    // Quando um arquivo for selecionado pelo input
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
 });
