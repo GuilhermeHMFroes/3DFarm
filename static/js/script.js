@@ -270,11 +270,13 @@ document.addEventListener("DOMContentLoaded", function () {
         fileList.innerHTML = '';  // Limpa a lista de arquivos antes de adicionar novos itens
     
         if (files.length > 0) {
+            // Exibe os arquivos na lista
             files.forEach(file => {
                 const fileItem = createFileItem(file);
                 fileList.appendChild(fileItem);
             });
         } else {
+            // Exibe a mensagem quando não há arquivos
             fileList.innerHTML = "<p>Nenhum arquivo encontrado.</p>";
         }
     
