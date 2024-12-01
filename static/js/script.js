@@ -284,34 +284,6 @@ document.addEventListener("DOMContentLoaded", function () {
         attachPrintHandler();   // Conecta os eventos de impressão
     }
     
-
-    // Função para enviar o arquivo para o servidor
-    function uploadFile(file) {
-        const formData = new FormData();
-        formData.append("file", file);
-    
-        fetch("/upload", {
-            method: "POST",
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Criar o item de arquivo e adicionar à lista
-                const fileItem = createFileItem(data.fileName);
-                fileList.appendChild(fileItem);
-                attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
-                attachPrintHandler();   // Garantir que o evento de impressão seja ligado
-            } else {
-                alert("Erro ao enviar o arquivo: " + data.message);
-            }
-        })
-        .catch(error => {
-            console.error("Erro ao fazer upload:", error);
-            alert("Erro ao fazer upload.");
-        });
-    }
-    
     
     // Eventos para arrastar e soltar
     uploadArea.addEventListener("dragover", (event) => {
@@ -361,9 +333,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Erro ao carregar arquivos:", error);
         document.getElementById('fileList').innerHTML = "<p>Erro ao carregar arquivos.</p>";
     });
-
-
-    
     
     // Excluir arquivos
     function attachDeleteHandler() {
@@ -419,4 +388,35 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
+
+    //Modal de impressão
+
+    function attachPrintHandler() {
+        const printButtons = document.querySelectorAll('.printFile');
+        printButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                openPrintModal();  // Chama a função para abrir o modal de impressão
+            });
+        });
+    }
+
+    // Função para abrir o modal de impressão
+    function openPrintModal() {
+        const modal = document.getElementById("modalPrint");
+        const modalContent = document.getElementById("modalContentPrinting");
+
+        // Requisição para pegar o conteúdo do modal
+        fetch("/get_print_modal")
+            .then(response => response.text())  // Pega o HTML da página impressao.html
+            .then(html => {
+                modalContent.innerHTML = html;  // Atualiza o conteúdo do modal
+                modal.style.display = "block";  // Exibe o modal
+            })
+            .catch(error => {
+                console.error("Erro ao carregar o modal de impressão:", error);
+                alert("Erro ao carregar o modal.");
+            });
+    }
+
+
 });

@@ -74,13 +74,11 @@
 
 </div>
 
-<button class="btn printFile" id="print">Imprimir</button>
-
 <!-- Modal de Impressão -->
-<div id="modalPrint" class="modal" style="display:none;"> <!-- Inicialmente invisível -->
-    <div id="modalContentPrinting" class="modal-content">
-        <span class="close">&times;</span> <!-- Botão de fechar -->
-        <!-- O conteúdo do modal será carregado aqui -->
+<div id="modalPrint" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <div id="modalContentPrinting"></div> <!-- O conteúdo será carregado dinamicamente aqui -->
     </div>
 </div>
 
