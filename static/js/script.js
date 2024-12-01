@@ -88,11 +88,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 const printerPort = this.getAttribute("data-port");
                 const printerApi = this.getAttribute("data-api");
                 const printerWebcam = this.getAttribute("data-webcam");
-    
+
                 // Exibe o formulário de edição no modal
                 const editForm = document.getElementById("editPrinterForm");
                 editForm.style.display = "block";
-    
+
                 // Preenche os campos do formulário com os dados da impressora
                 document.getElementById("editNome").value = printerNome;
                 document.getElementById("editApi").value = printerApi;
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("editPrinter");
                 form.onsubmit = function (event) {
                     event.preventDefault();
-    
+
                     const formData = {
                         ip: form["ip"].value,
                         nome: form["nome"].value,
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         port: form["port"].value,
                         webcam_port: form["webcam_port"].value
                     };
-    
+
                     fetch("/update_printer", {
                         method: "POST",
                         headers: {
@@ -245,4 +245,166 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Chamar a função para carregar os dados ao inicializar a página
     fetchPrinterStates();
+
+    // Elementos da página
+    const uploadArea = document.getElementById("uploadArea");
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+
+    // Função para enviar o arquivo para o servidor
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/upload", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Exibe o arquivo na lista após o upload
+                const fileItem = document.createElement("div");
+                fileItem.classList.add("file-item");
+                fileItem.innerHTML = `
+                    <span class="file-name">${data.fileName}</span>
+                    <button class="btn deleteFile" data-file="${data.fileName}">Excluir</button>
+                `;
+                fileList.appendChild(fileItem);
+                attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
+            } else {
+                alert("Erro ao enviar o arquivo.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao fazer upload:", error);
+            alert("Erro ao fazer upload.");
+        });
+    }
+
+
+    // Eventos para arrastar e soltar
+    uploadArea.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        uploadArea.style.borderColor = "#4CAF50"; // Muda a cor da borda durante o arraste
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "#ccc"; // Restaura a cor da borda quando o item sai da área
+    });
+
+    uploadArea.addEventListener("drop", (event) => {
+        event.preventDefault();
+        uploadArea.style.borderColor = "#ccc"; // Restaura a cor da borda após o item ser solto
+
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
+    // Clique para abrir o seletor de arquivos
+    uploadArea.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    // Quando um arquivo for selecionado pelo input
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
+    // Listar arquivos
+    fetch('/list_files')
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Adiciona um log para ver o que está sendo retornado
+        const fileList = document.getElementById('fileList');
+        if (data.success) {
+            if (data.files.length > 0) {
+                fileList.innerHTML = data.files
+                    .map(
+                        (file) => `
+                            <div class="file-item">
+                                <span class="file-name">${file}</span>
+                                <p>teste</p>
+                                <button class="btn deleteFile" data-file="${file}">Excluir</button>
+                            </div>
+                        `
+                    )
+                    .join('');
+                console.log("Arquivos listados com sucesso:", data.files);
+                attachDeleteHandler(); // Conecta os eventos de exclusão
+            } else {
+                fileList.innerHTML = "<p>Nenhum arquivo enviado.</p>";
+            }
+        } else {
+            fileList.innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
+        }
+    })
+    .catch((error) => {
+        console.error("Erro ao carregar arquivos:", error);
+        fileList.innerHTML = "<p>Erro ao carregar arquivos.</p>";
+    });
+
+    
+    
+    // Excluir arquivos
+    function attachDeleteHandler() {
+        const deleteButtons = document.querySelectorAll('.deleteFile');
+        deleteButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const fileName = this.getAttribute('data-file');
+                if (confirm(`Tem certeza que deseja excluir o arquivo ${fileName}?`)) {
+                    fetch('/delete_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ fileName }),
+                    })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            alert(data.message || 'Arquivo excluído com sucesso!');
+                            // Recarrega a lista de arquivos após a exclusão
+                            fetch('/list_files')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        const fileList = document.getElementById('fileList');
+                                        fileList.innerHTML = data.files.length > 0
+                                            ? data.files.map(file => `
+                                                <div class="file-item">
+                                                    <span class="file-name">${file}</span>
+                                                    <button class="btn deleteFile" data-file="${file}">Excluir</button>
+                                                </div>
+                                            `).join('')
+                                            : "<p>Nenhum arquivo encontrado.</p>";
+                                        attachDeleteHandler(); // Re-aplica os manipuladores de exclusão
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Erro ao carregar arquivos:', error);
+                                    alert('Erro ao carregar arquivos.');
+                                });
+                        } else {
+                            alert(data.message || 'Erro ao excluir o arquivo.');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao excluir arquivo:', error);
+                        alert('Erro ao excluir arquivo.');
+                    });
+                }
+            });
+        });
+    }
+    
+
+    
+    
+
 });
