@@ -1,7 +1,34 @@
 <div class="modal-content">
     <span class="close">&times;</span>
     <h2>Gerenciar Impressoras</h2>
-    <ul>
+
+    <table>
+
+        <tr>
+            <th>Nome</th>
+            <th>IP</th>
+            <th>Porta</th>
+            <th>Remover</th>
+            <th>Editar</th>
+        </tr>
+
+        {% for printer in printers %}
+        <tr>
+            <td><strong>{{ printer['nome'] }}</strong></td>
+            <td>{{ printer['ip'] }}</td>
+            <td>{{ printer['port'] }}</td>
+            <td><button class="deletePrinter btnTable" data-ip="{{ printer['ip'] }}">Remover</button></td>
+            <td><button class="editPrinter btnTable" data-ip="{{ printer['ip'] }}" 
+                data-nome="{{ printer['nome'] }}" 
+                data-port="{{ printer['port'] }}"
+                data-webcam="{{ printer['webcam_port'] }}"
+                data-api="{{ printer['api_key'] }}">Editar</button></td>
+        </tr>
+        {% endfor %}
+
+    </table>
+    
+    <!--<ul>
         {% for printer in printers %}
         <li>
             <strong>{{ printer['nome'] }}</strong> - IP: {{ printer['ip'] }} - Porta: {{ printer['port'] }}
@@ -13,7 +40,7 @@
                     data-api="{{ printer['api_key'] }}">Editar</button>
         </li>
         {% endfor %}
-    </ul>
+    </ul>-->
 
     <!-- Formulário de Edição da Impressora -->
     <div id="editPrinterForm" style="display:none;">

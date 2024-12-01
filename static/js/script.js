@@ -266,8 +266,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Exibe o arquivo na lista após o upload
                 const fileItem = document.createElement("div");
                 fileItem.classList.add("file-item");
-                fileItem.textContent = data.fileName;
+                fileItem.innerHTML = `
+                    <span class="file-name">${data.fileName}</span>
+                    <button class="btn deleteFile" data-file="${data.fileName}">Excluir</button>
+                `;
                 fileList.appendChild(fileItem);
+                attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
             } else {
                 alert("Erro ao enviar o arquivo.");
             }
@@ -277,6 +281,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Erro ao fazer upload.");
         });
     }
+
 
     // Eventos para arrastar e soltar
     uploadArea.addEventListener("dragover", (event) => {
@@ -310,5 +315,96 @@ document.addEventListener("DOMContentLoaded", function () {
             uploadFile(file);
         }
     });
+
+    // Listar arquivos
+    fetch('/list_files')
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Adiciona um log para ver o que está sendo retornado
+        const fileList = document.getElementById('fileList');
+        if (data.success) {
+            if (data.files.length > 0) {
+                fileList.innerHTML = data.files
+                    .map(
+                        (file) => `
+                            <div class="file-item">
+                                <span class="file-name">${file}</span>
+                                <p>teste</p>
+                                <button class="btn deleteFile" data-file="${file}">Excluir</button>
+                            </div>
+                        `
+                    )
+                    .join('');
+                console.log("Arquivos listados com sucesso:", data.files);
+                attachDeleteHandler(); // Conecta os eventos de exclusão
+            } else {
+                fileList.innerHTML = "<p>Nenhum arquivo enviado.</p>";
+            }
+        } else {
+            fileList.innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
+        }
+    })
+    .catch((error) => {
+        console.error("Erro ao carregar arquivos:", error);
+        fileList.innerHTML = "<p>Erro ao carregar arquivos.</p>";
+    });
+
+    
+    
+    // Excluir arquivos
+    function attachDeleteHandler() {
+        const deleteButtons = document.querySelectorAll('.deleteFile');
+        deleteButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const fileName = this.getAttribute('data-file');
+                if (confirm(`Tem certeza que deseja excluir o arquivo ${fileName}?`)) {
+                    fetch('/delete_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ fileName }),
+                    })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            alert(data.message || 'Arquivo excluído com sucesso!');
+                            // Recarrega a lista de arquivos após a exclusão
+                            fetch('/list_files')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        const fileList = document.getElementById('fileList');
+                                        fileList.innerHTML = data.files.length > 0
+                                            ? data.files.map(file => `
+                                                <div class="file-item">
+                                                    <span class="file-name">${file}</span>
+                                                    <button class="btn deleteFile" data-file="${file}">Excluir</button>
+                                                </div>
+                                            `).join('')
+                                            : "<p>Nenhum arquivo encontrado.</p>";
+                                        attachDeleteHandler(); // Re-aplica os manipuladores de exclusão
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Erro ao carregar arquivos:', error);
+                                    alert('Erro ao carregar arquivos.');
+                                });
+                        } else {
+                            alert(data.message || 'Erro ao excluir o arquivo.');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao excluir arquivo:', error);
+                        alert('Erro ao excluir arquivo.');
+                    });
+                }
+            });
+        });
+    }
+    
+
+    
+    
 
 });

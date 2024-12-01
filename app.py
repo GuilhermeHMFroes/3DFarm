@@ -4,6 +4,7 @@ from printer_state import get_all_printer_statuses, get_printer_status # Status 
 from database import create_tables
 from printer_manager import get_all_printers, add_printer, remove_printer, update_printer # Gerenciador de Imprpessoras
 from upload import handle_file_upload  # Importa a função de upload
+import os
 
 app = Flask(__name__)
 
@@ -59,6 +60,7 @@ def add_printer_route():
         return jsonify({"message": "Impressora adicionada com sucesso!"})
     return jsonify({"message": "Erro ao adicionar impressora."}), 500
 
+
 @app.route('/manage_printers', methods=['GET'])
 def manage_printers_route():
     """Rota para carregar o template de gerenciamento de impressoras."""
@@ -100,6 +102,40 @@ def update_printer_route():
 def upload_file():
     """Rota para realizar o upload do arquivo."""
     return handle_file_upload()
+
+
+@app.route('/list_files', methods=['GET'])
+def list_files():
+    try:
+        files = os.listdir("uploads/")
+        print(files)
+        return jsonify({"success": True, "files": files})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+
+@app.route('/delete_file', methods=['POST'])
+def delete_file():
+    """Rota para excluir um arquivo."""
+    data = request.get_json()
+    file_name = data.get('fileName')
+    
+    if not file_name:
+        return jsonify({"success": False, "message": "Arquivo não especificado"}), 400
+
+    file_path = os.path.join('uploads/', file_name)
+    
+    if os.path.exists(file_path):
+        try:
+            print(f"Excluindo arquivo: {file_path}")  # Log de depuração
+            os.remove(file_path)
+            return jsonify({"success": True, "message": f"Arquivo {file_name} excluído com sucesso!"})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Erro ao excluir arquivo: {str(e)}"}), 500
+    else:
+        return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
