@@ -4,6 +4,7 @@ from printer_state import get_all_printer_statuses, get_printer_status # Status 
 from database import create_tables
 from printer_manager import get_all_printers, add_printer, remove_printer, update_printer # Gerenciador de Imprpessoras
 from upload import handle_file_upload  # Importa a função de upload
+from printing import start_printing_on_printer
 import os
 
 app = Flask(__name__)
@@ -103,7 +104,6 @@ def upload_file():
     """Rota para realizar o upload do arquivo."""
     return handle_file_upload()
 
-
 @app.route('/list_files', methods=['GET'])
 def list_files():
     try:
@@ -112,8 +112,6 @@ def list_files():
         return jsonify({"success": True, "files": files})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
-
-
 
 @app.route('/delete_file', methods=['POST'])
 def delete_file():
@@ -135,6 +133,34 @@ def delete_file():
             return jsonify({"success": False, "message": f"Erro ao excluir arquivo: {str(e)}"}), 500
     else:
         return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
+
+
+# Rota para abrir modal de impressão
+@app.route('/get_print_modal', methods=['GET'])
+def get_print_modal():
+    
+    return render_template('impressao.html')
+
+
+
+@app.route('/start_printing', methods=['POST'])
+def start_printing():
+    data = request.get_json()
+    file_name = data.get('fileName')
+    ip = data.get('ip')
+
+    if not file_name or not ip:
+        return jsonify({"success": False, "message": "Parâmetros inválidos."}), 400
+
+    # Lógica para enviar o comando de impressão à impressora específica
+    # Aqui você chamaria a função que controla a impressão na impressora
+    success = start_printing_on_printer(file_name, ip)
+
+    if success:
+        return jsonify({"success": True, "message": "Impressão iniciada com sucesso!"})
+    else:
+        return jsonify({"success": False, "message": "Erro ao iniciar a impressão."}), 500
+
 
 
 if __name__ == "__main__":

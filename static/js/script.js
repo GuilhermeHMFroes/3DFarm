@@ -251,11 +251,43 @@ document.addEventListener("DOMContentLoaded", function () {
     const fileInput = document.getElementById("fileInput");
     const fileList = document.getElementById("fileList");
 
+    // Função para gerar o item da lista de arquivos
+    function createFileItem(fileName) {
+        const fileItem = document.createElement("div");
+        fileItem.classList.add("file-item");
+        fileItem.innerHTML = `
+            <span class="file-name">${fileName}</span>
+            <button class="btn deleteFile" data-file="${fileName}">Excluir</button>
+            <button class="btn printFile" data-file="${fileName}">Imprimir</button>
+        `;
+        return fileItem;
+    }
+
+
+    // Função para criar e exibir os itens de arquivo na lista
+    function renderFileList(files) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';  // Limpa a lista de arquivos antes de adicionar novos itens
+    
+        if (files.length > 0) {
+            files.forEach(file => {
+                const fileItem = createFileItem(file);
+                fileList.appendChild(fileItem);
+            });
+        } else {
+            fileList.innerHTML = "<p>Nenhum arquivo encontrado.</p>";
+        }
+    
+        attachDeleteHandler();  // Conecta os eventos de exclusão
+        attachPrintHandler();   // Conecta os eventos de impressão
+    }
+    
+
     // Função para enviar o arquivo para o servidor
     function uploadFile(file) {
         const formData = new FormData();
         formData.append("file", file);
-
+    
         fetch("/upload", {
             method: "POST",
             body: formData,
@@ -263,17 +295,13 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Exibe o arquivo na lista após o upload
-                const fileItem = document.createElement("div");
-                fileItem.classList.add("file-item");
-                fileItem.innerHTML = `
-                    <span class="file-name">${data.fileName}</span>
-                    <button class="btn deleteFile" data-file="${data.fileName}">Excluir</button>
-                `;
+                // Criar o item de arquivo e adicionar à lista
+                const fileItem = createFileItem(data.fileName);
                 fileList.appendChild(fileItem);
                 attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
+                attachPrintHandler();   // Garantir que o evento de impressão seja ligado
             } else {
-                alert("Erro ao enviar o arquivo.");
+                alert("Erro ao enviar o arquivo: " + data.message);
             }
         })
         .catch(error => {
@@ -281,8 +309,8 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Erro ao fazer upload.");
         });
     }
-
-
+    
+    
     // Eventos para arrastar e soltar
     uploadArea.addEventListener("dragover", (event) => {
         event.preventDefault();
@@ -321,33 +349,17 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(response => response.json())
     .then(data => {
         console.log(data); // Adiciona um log para ver o que está sendo retornado
-        const fileList = document.getElementById('fileList');
         if (data.success) {
-            if (data.files.length > 0) {
-                fileList.innerHTML = data.files
-                    .map(
-                        (file) => `
-                            <div class="file-item">
-                                <span class="file-name">${file}</span>
-                                <p>teste</p>
-                                <button class="btn deleteFile" data-file="${file}">Excluir</button>
-                            </div>
-                        `
-                    )
-                    .join('');
-                console.log("Arquivos listados com sucesso:", data.files);
-                attachDeleteHandler(); // Conecta os eventos de exclusão
-            } else {
-                fileList.innerHTML = "<p>Nenhum arquivo enviado.</p>";
-            }
+            renderFileList(data.files); // Exibe os arquivos carregados
         } else {
-            fileList.innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
+            document.getElementById('fileList').innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
         }
     })
     .catch((error) => {
         console.error("Erro ao carregar arquivos:", error);
-        fileList.innerHTML = "<p>Erro ao carregar arquivos.</p>";
+        document.getElementById('fileList').innerHTML = "<p>Erro ao carregar arquivos.</p>";
     });
+
 
     
     
@@ -374,16 +386,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.success) {
-                                        const fileList = document.getElementById('fileList');
-                                        fileList.innerHTML = data.files.length > 0
-                                            ? data.files.map(file => `
-                                                <div class="file-item">
-                                                    <span class="file-name">${file}</span>
-                                                    <button class="btn deleteFile" data-file="${file}">Excluir</button>
-                                                </div>
-                                            `).join('')
-                                            : "<p>Nenhum arquivo encontrado.</p>";
-                                        attachDeleteHandler(); // Re-aplica os manipuladores de exclusão
+                                        renderFileList(data.files); // Re-renderiza a lista de arquivos
                                     }
                                 })
                                 .catch((error) => {
@@ -402,9 +405,16 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    
 
+    //Carregar lista arquivos
+    function attachPrintHandler() {
+        const printButtons = document.querySelectorAll('.printFile');
+        printButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const fileName = this.getAttribute('data-file');
+                openPrintModal(fileName); // Chama a função para abrir o modal de impressão
+            });
+        });
+    }
     
-    
-
 });

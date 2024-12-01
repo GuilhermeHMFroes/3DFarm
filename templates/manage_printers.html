@@ -27,20 +27,6 @@
         {% endfor %}
 
     </table>
-    
-    <!--<ul>
-        {% for printer in printers %}
-        <li>
-            <strong>{{ printer['nome'] }}</strong> - IP: {{ printer['ip'] }} - Porta: {{ printer['port'] }}
-            <button class="deletePrinter" data-ip="{{ printer['ip'] }}">Remover</button>
-            <button class="editPrinter" data-ip="{{ printer['ip'] }}" 
-                    data-nome="{{ printer['nome'] }}" 
-                    data-port="{{ printer['port'] }}"
-                    data-webcam="{{ printer['webcam_port'] }}"
-                    data-api="{{ printer['api_key'] }}">Editar</button>
-        </li>
-        {% endfor %}
-    </ul>-->
 
     <!-- Formulário de Edição da Impressora -->
     <div id="editPrinterForm" style="display:none;">
