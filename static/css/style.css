@@ -48,7 +48,12 @@ body{
 
     display: inline-block;
 
-    width: 30%;
+
+    height: 350px;
+
+    width: 300px;
+
+    border-radius: 10px;
 
 }
 
@@ -79,8 +84,15 @@ body{
 
 .camera{
 
+    
     width: 100%;
     /*max-width: 600px;*/
+
+}
+
+.error-image {
+
+    width: 150px;
 
 }
 

@@ -251,6 +251,38 @@ document.addEventListener("DOMContentLoaded", function () {
     const fileInput = document.getElementById("fileInput");
     const fileList = document.getElementById("fileList");
 
+    // Função para enviar o arquivo para o servidor
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/upload", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Exibe o arquivo na lista após o upload
+                const fileItem = document.createElement("div");
+                fileItem.classList.add("file-item");
+                fileItem.innerHTML = `
+                    <span class="file-name">${data.fileName}</span>
+                    <button class="btn deleteFile" data-file="${data.fileName}">Excluir</button>
+                `;
+                fileList.appendChild(fileItem);
+                attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
+            } else {
+                alert("Erro ao enviar o arquivo.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao fazer upload:", error);
+            alert("Erro ao fazer upload.");
+        });
+    }
+
+
     // Função para gerar o item da lista de arquivos
     function createFileItem(fileName) {
         const fileItem = document.createElement("div");

@@ -23,56 +23,67 @@
     <div id="modalContentManage"></div>
 </div>
 
-<div>
-    
-{% if error_message %}
-<div class="alert alert-warning">{{ error_message }}</div>
-{% else %}
-<div id="impressoras">
-    {% for printer_state in printer_states %}
-    <div class="impressora" id="printer-{{ printer_state['printer']['ip'] }}">
-        <div class="conteudo">
-            <h2 class="nomeImpressora"> {{ printer_state['printer']['nome'] }}</h2> <!-- Nome da impressora -->
+<div class="lado Esquerdo">
 
-            <!-- Exibir o feed da câmera -->
-            <img class="camera"
-                src="http://{{ printer_state['printer']['ip']}}:{{printer_state['printer']['webcam_port']}}"
-                alt="Aqui deveria estar a imagem">
+    {% if error_message %}
+    <div class="alert alert-warning">{{ error_message }}</div>
+    {% else %}
+    <div id="impressoras">
+        {% for printer_state in printer_states %}
+        <div class="impressora" id="printer-{{ printer_state['printer']['ip'] }}">
+            <div class="conteudo">
+                <h2 class="nomeImpressora"> {{ printer_state['printer']['nome'] }}</h2> <!-- Nome da impressora -->
 
-            <!-- Exibir o estado da impressora -->
-            <ul>
+                <!-- Exibir o feed da câmera -->
+                <img class="camera"
+                    src="http://{{ printer_state['printer']['ip']}}:{{printer_state['printer']['webcam_port']}}"
+                    alt="Aqui deveria estar a imagem"
+                    onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/3dprinter.svg') }}'; this.classList.add('error-image');"> <!--Se apresentar erro de sintaxe verifique o compilador-->
 
-                <li id="printer-status-{{ printer_state['printer']['ip'] }}">Status: {{
-                    printer_state['state']['state']['text'] }}</li>
-                <li id="bed-temp-{{ printer_state['printer']['ip'] }}">Cama: {{
-                    printer_state['state']['temperature']['bed']['actual'] }}°C</li>
-                <li id="tool-temp-{{ printer_state['printer']['ip'] }}">Bico: {{
-                    printer_state['state']['temperature']['tool0']['actual'] }}°C</li>
+                <!-- Exibir o estado da impressora -->
+                <ul>
 
-            </ul>
+                    <li id="printer-status-{{ printer_state['printer']['ip'] }}">Status: {{
+                        printer_state['state']['state']['text'] }}</li>
+                    <li id="bed-temp-{{ printer_state['printer']['ip'] }}">Cama: {{
+                        printer_state['state']['temperature']['bed']['actual'] }}°C</li>
+                    <li id="tool-temp-{{ printer_state['printer']['ip'] }}">Bico: {{
+                        printer_state['state']['temperature']['tool0']['actual'] }}°C</li>
 
+                </ul>
+
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
-{% endif %}
+    {% endif %}
 
-{% if disconnected_printers %}
-<h3>Impressoras com erro:</h3>
-<ul>
-    {% for printer in disconnected_printers %}
-    <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-
-<div id="uploadArea" class="upload-area">
-    <p>Arraste e solte um arquivo aqui, ou clique para selecionar um arquivo.</p>
-    <input type="file" id="fileInput" style="display:none;" />
 </div>
 
-<!-- Lista de arquivos será exibida nessa tag -->
-<div id="fileList">
+<div class="ladoDireito">
+
+    <div class="printerError">
+
+        {% if disconnected_printers %}
+        <h3>Impressoras com erro:</h3>
+        <ul>
+            {% for printer in disconnected_printers %}
+            <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+    </div>
+
+    <div id="uploadArea" class="upload-area">
+        <p>Arraste e solte um arquivo aqui, ou clique para selecionar um arquivo.</p>
+        <input type="file" id="fileInput" style="display:none;" />
+    </div>
+
+    <!-- Lista de arquivos será exibida nessa tag -->
+    <div id="fileList">
+
+    </div>
 
 </div>
 
