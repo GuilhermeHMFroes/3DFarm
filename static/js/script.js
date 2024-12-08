@@ -395,28 +395,121 @@ document.addEventListener("DOMContentLoaded", function () {
         const printButtons = document.querySelectorAll('.printFile');
         printButtons.forEach(button => {
             button.addEventListener('click', function () {
-                openPrintModal();  // Chama a função para abrir o modal de impressão
+                const fileName = this.getAttribute('data-file');
+                openPrintModal(fileName);  // Chama a função para abrir o modal de impressão com o nome do arquivo
             });
         });
     }
 
     // Função para abrir o modal de impressão
-    function openPrintModal() {
+    function openPrintModal(fileName) {
         const modal = document.getElementById("modalPrint");
         const modalContent = document.getElementById("modalContentPrinting");
 
         // Requisição para pegar o conteúdo do modal
         fetch("/get_print_modal")
-            .then(response => response.text())  // Pega o HTML da página impressao.html
+            .then(response => response.text())
             .then(html => {
-                modalContent.innerHTML = html;  // Atualiza o conteúdo do modal
-                modal.style.display = "block";  // Exibe o modal
+                modalContent.innerHTML = html; // Atualiza o conteúdo do modal com o template de impressão
+                modal.style.display = "block"; // Exibe o modal
+
+                // Após carregar o modal, buscar a lista de impressoras
+                fetch("/list_printers")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const printerListDiv = document.getElementById("printerList");
+                            if (data.printers.length > 0) {
+                                printerListDiv.innerHTML = data.printers.map(printer => `
+                                    <div class="printer-item">
+                                        <input type="radio" name="printer" value="${printer.ip}" id="printer-${printer.ip}">
+                                        <label for="printer-${printer.ip}">${printer.nome}</label>
+                                    </div>
+                                `).join('');
+                            } else {
+                                printerListDiv.innerHTML = "<p>Nenhuma impressora disponível.</p>";
+                            }
+
+                            // Configura evento para o botão "Confirmar Impressão"
+                            const confirmButton = document.getElementById("confirmPrint");
+                            confirmButton.onclick = function () {
+                                const selectedPrinter = document.querySelector('input[name="printer"]:checked');
+                                if (!selectedPrinter) {
+                                    alert("Por favor, selecione uma impressora.");
+                                    return;
+                                }
+
+                                const printerIp = selectedPrinter.value;
+
+                                // Envia a solicitação de impressão com o fileName
+                                fetch("/start_print", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ printer_ip: printerIp, file_name: fileName }),
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert(data.message);
+                                            modal.style.display = "none"; // Fecha o modal após sucesso
+                                        } else {
+                                            alert("Erro ao iniciar impressão: " + data.message);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error("Erro ao iniciar impressão:", error);
+                                        alert("Erro ao iniciar impressão.");
+                                    });
+                            };
+                        } else {
+                            alert("Erro ao carregar impressoras: " + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro ao carregar lista de impressoras:", error);
+                        const printerListDiv = document.getElementById("printerList");
+                        printerListDiv.innerHTML = "<p>Erro ao carregar lista de impressoras.</p>";
+                    });
             })
             .catch(error => {
                 console.error("Erro ao carregar o modal de impressão:", error);
                 alert("Erro ao carregar o modal.");
             });
-    }
+    };
 
+    function startPrinting(printerIp, fileName) {
+        if (!printerIp || !fileName) {
+            alert("Erro: IP da impressora ou nome do arquivo está faltando.");
+            return;
+        }
+        
+        console.log("Iniciando impressão com:", printerIp, fileName); // Log para depuração
+        fetch('/start_print', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                printer_ip: printerIp,
+                file_name: fileName,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Impressão iniciada com sucesso!");
+            } else {
+                alert("Erro ao iniciar impressão: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao enviar comando de impressão:", error);
+            alert("Erro ao enviar comando de impressão.");
+        });
+    }
+        
+        
 
 });

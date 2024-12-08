@@ -135,6 +135,7 @@ def delete_file():
         return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
 
 
+
 # Rota para abrir modal de impressão
 @app.route('/get_print_modal', methods=['GET'])
 def get_print_modal():
@@ -142,24 +143,43 @@ def get_print_modal():
     return render_template('impressao.html')
 
 
+# Retorna a lista de impressoras disponíveis.
+@app.route('/list_printers', methods=['GET'])
+def list_printers():
+    """Retorna a lista de impressoras disponíveis."""
+    try:
+        printers = get_all_printers()  # Função que retorna a lista de impressoras
+        return jsonify({"success": True, "printers": printers})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
-@app.route('/start_printing', methods=['POST'])
-def start_printing():
+# Inicia a impressão em uma impressora específica.
+@app.route('/start_print', methods=['POST'])
+def start_print():
     data = request.get_json()
-    file_name = data.get('fileName')
-    ip = data.get('ip')
+    print("Dados recebidos:", data)  # Log para depuração
+    printer_ip = data.get('printer_ip')
+    file_name = data.get('file_name')
 
-    if not file_name or not ip:
-        return jsonify({"success": False, "message": "Parâmetros inválidos."}), 400
+    # Verifique se os parâmetros foram enviados
+    if not printer_ip or not file_name:
+        return jsonify({
+            "success": False,
+            "message": "Parâmetros 'printer_ip' e 'file_name' são obrigatórios."
+        }), 400
 
-    # Lógica para enviar o comando de impressão à impressora específica
-    # Aqui você chamaria a função que controla a impressão na impressora
-    success = start_printing_on_printer(file_name, ip)
+    try:
+        success = start_printing_on_printer(printer_ip, file_name)
+        if success:
+            return jsonify({"success": True, "message": "Impressão iniciada com sucesso!"})
+        else:
+            return jsonify({"success": False, "message": "Erro ao iniciar impressão."})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
 
-    if success:
-        return jsonify({"success": True, "message": "Impressão iniciada com sucesso!"})
-    else:
-        return jsonify({"success": False, "message": "Erro ao iniciar a impressão."}), 500
+
+
+
 
 
 
