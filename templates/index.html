@@ -4,24 +4,26 @@
 {% endblock %}
 
 {% block content %}
-    <h1>3D Farm Dashboard</h1>
+<h1>3D Farm Dashboard</h1>
 
-    <button id="addprinter" type="button">Adicionar impressora</button>
-    <button id="gerenciarImpressora" type="button">Gerenciar Impressoras</button>
+<button id="addprinter" type="button">Adicionar impressora</button>
+<button id="gerenciarImpressora" type="button">Gerenciar Impressoras</button>
 
-    <br><br><br>
+<br><br><br>
 
-    <!-- modal de adicionar impressoras -->
-    <div id="modalAddPrinter" class="modal">
-        <!-- O conteúdo será carregado aqui -->
-        <div id="modalContent"></div>
-    </div>
+<!-- modal de adicionar impressoras -->
+<div id="modalAddPrinter" class="modal">
+    <!-- O conteúdo será carregado aqui -->
+    <div id="modalContent"></div>
+</div>
 
-    <!-- modal de gerenciar impressoras -->
-    <div id="modalManagePrinters" class="modal">
-        <!-- O conteúdo será carregado aqui -->
-        <div id="modalContentManage"></div>
-    </div>
+<!-- modal de gerenciar impressoras -->
+<div id="modalManagePrinters" class="modal">
+    <!-- O conteúdo será carregado aqui -->
+    <div id="modalContentManage"></div>
+</div>
+
+<div class="lado Esquerdo">
 
     {% if error_message %}
     <div class="alert alert-warning">{{ error_message }}</div>
@@ -35,7 +37,8 @@
                 <!-- Exibir o feed da câmera -->
                 <img class="camera"
                     src="http://{{ printer_state['printer']['ip']}}:{{printer_state['printer']['webcam_port']}}"
-                    alt="Aqui deveria estar a imagem">
+                    alt="Aqui deveria estar a imagem"
+                    onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/3dprinter.svg') }}'; this.classList.add('error-image');"> <!--Se apresentar erro de sintaxe verifique o compilador-->
 
                 <!-- Exibir o estado da impressora -->
                 <ul>
@@ -55,14 +58,22 @@
     </div>
     {% endif %}
 
-    {% if disconnected_printers %}
-    <h3>Impressoras com erro:</h3>
-    <ul>
-        {% for printer in disconnected_printers %}
-        <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+</div>
+
+<div class="ladoDireito">
+
+    <div class="printerError">
+
+        {% if disconnected_printers %}
+        <h3>Impressoras com erro:</h3>
+        <ul>
+            {% for printer in disconnected_printers %}
+            <li>Erro na impressora {{ printer.ip }}: {{ printer.error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+    </div>
 
     <div id="uploadArea" class="upload-area">
         <p>Arraste e solte um arquivo aqui, ou clique para selecionar um arquivo.</p>
@@ -71,7 +82,19 @@
 
     <!-- Lista de arquivos será exibida nessa tag -->
     <div id="fileList">
-        
+
     </div>
+
+</div>
+
+<!-- Modal de Impressão -->
+<div id="modalPrint" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <div id="modalContentPrinting"></div> <!-- O conteúdo será carregado dinamicamente aqui -->
+    </div>
+</div>
+
+
 
 {% endblock %}

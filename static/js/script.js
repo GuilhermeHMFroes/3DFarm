@@ -283,6 +283,40 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
+    // Função para gerar o item da lista de arquivos
+    function createFileItem(fileName) {
+        const fileItem = document.createElement("div");
+        fileItem.classList.add("file-item");
+        fileItem.innerHTML = `
+            <span class="file-name">${fileName}</span>
+            <button class="btn deleteFile" data-file="${fileName}">Excluir</button>
+            <button class="btn printFile" data-file="${fileName}">Imprimir</button>
+        `;
+        return fileItem;
+    }
+
+
+    // Função para criar e exibir os itens de arquivo na lista
+    function renderFileList(files) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';  // Limpa a lista de arquivos antes de adicionar novos itens
+    
+        if (files.length > 0) {
+            // Exibe os arquivos na lista
+            files.forEach(file => {
+                const fileItem = createFileItem(file);
+                fileList.appendChild(fileItem);
+            });
+        } else {
+            // Exibe a mensagem quando não há arquivos
+            fileList.innerHTML = "<p>Nenhum arquivo encontrado.</p>";
+        }
+    
+        attachDeleteHandler();  // Conecta os eventos de exclusão
+        attachPrintHandler();   // Conecta os eventos de impressão
+    }
+    
+    
     // Eventos para arrastar e soltar
     uploadArea.addEventListener("dragover", (event) => {
         event.preventDefault();
@@ -321,35 +355,16 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(response => response.json())
     .then(data => {
         console.log(data); // Adiciona um log para ver o que está sendo retornado
-        const fileList = document.getElementById('fileList');
         if (data.success) {
-            if (data.files.length > 0) {
-                fileList.innerHTML = data.files
-                    .map(
-                        (file) => `
-                            <div class="file-item">
-                                <span class="file-name">${file}</span>
-                                <p>teste</p>
-                                <button class="btn deleteFile" data-file="${file}">Excluir</button>
-                            </div>
-                        `
-                    )
-                    .join('');
-                console.log("Arquivos listados com sucesso:", data.files);
-                attachDeleteHandler(); // Conecta os eventos de exclusão
-            } else {
-                fileList.innerHTML = "<p>Nenhum arquivo enviado.</p>";
-            }
+            renderFileList(data.files); // Exibe os arquivos carregados
         } else {
-            fileList.innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
+            document.getElementById('fileList').innerHTML = "<p>Erro ao carregar a lista de arquivos.</p>";
         }
     })
     .catch((error) => {
         console.error("Erro ao carregar arquivos:", error);
-        fileList.innerHTML = "<p>Erro ao carregar arquivos.</p>";
+        document.getElementById('fileList').innerHTML = "<p>Erro ao carregar arquivos.</p>";
     });
-
-    
     
     // Excluir arquivos
     function attachDeleteHandler() {
@@ -374,16 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.success) {
-                                        const fileList = document.getElementById('fileList');
-                                        fileList.innerHTML = data.files.length > 0
-                                            ? data.files.map(file => `
-                                                <div class="file-item">
-                                                    <span class="file-name">${file}</span>
-                                                    <button class="btn deleteFile" data-file="${file}">Excluir</button>
-                                                </div>
-                                            `).join('')
-                                            : "<p>Nenhum arquivo encontrado.</p>";
-                                        attachDeleteHandler(); // Re-aplica os manipuladores de exclusão
+                                        renderFileList(data.files); // Re-renderiza a lista de arquivos
                                     }
                                 })
                                 .catch((error) => {
@@ -402,9 +408,140 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+
+    //Carregar lista arquivos
+    function attachPrintHandler() {
+        const printButtons = document.querySelectorAll('.printFile');
+        printButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const fileName = this.getAttribute('data-file');
+                openPrintModal(fileName); // Chama a função para abrir o modal de impressão
+            });
+        });
+    }
     
 
-    
-    
+    //Modal de impressão
+
+    function attachPrintHandler() {
+        const printButtons = document.querySelectorAll('.printFile');
+        printButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const fileName = this.getAttribute('data-file');
+                openPrintModal(fileName);  // Chama a função para abrir o modal de impressão com o nome do arquivo
+            });
+        });
+    }
+
+    // Função para abrir o modal de impressão
+    function openPrintModal(fileName) {
+        const modal = document.getElementById("modalPrint");
+        const modalContent = document.getElementById("modalContentPrinting");
+
+        // Requisição para pegar o conteúdo do modal
+        fetch("/get_print_modal")
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html; // Atualiza o conteúdo do modal com o template de impressão
+                modal.style.display = "block"; // Exibe o modal
+
+                // Após carregar o modal, buscar a lista de impressoras
+                fetch("/list_printers")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const printerListDiv = document.getElementById("printerList");
+                            if (data.printers.length > 0) {
+                                printerListDiv.innerHTML = data.printers.map(printer => `
+                                    <div class="printer-item">
+                                        <input type="radio" name="printer" value="${printer.ip}" id="printer-${printer.ip}">
+                                        <label for="printer-${printer.ip}">${printer.nome}</label>
+                                    </div>
+                                `).join('');
+                            } else {
+                                printerListDiv.innerHTML = "<p>Nenhuma impressora disponível.</p>";
+                            }
+
+                            // Configura evento para o botão "Confirmar Impressão"
+                            const confirmButton = document.getElementById("confirmPrint");
+                            confirmButton.onclick = function () {
+                                const selectedPrinter = document.querySelector('input[name="printer"]:checked');
+                                if (!selectedPrinter) {
+                                    alert("Por favor, selecione uma impressora.");
+                                    return;
+                                }
+
+                                const printerIp = selectedPrinter.value;
+
+                                // Envia a solicitação de impressão com o fileName
+                                fetch("/start_print", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ printer_ip: printerIp, file_name: fileName }),
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert(data.message);
+                                            modal.style.display = "none"; // Fecha o modal após sucesso
+                                        } else {
+                                            alert("Erro ao iniciar impressão: " + data.message);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error("Erro ao iniciar impressão:", error);
+                                        alert("Erro ao iniciar impressão.");
+                                    });
+                            };
+                        } else {
+                            alert("Erro ao carregar impressoras: " + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro ao carregar lista de impressoras:", error);
+                        const printerListDiv = document.getElementById("printerList");
+                        printerListDiv.innerHTML = "<p>Erro ao carregar lista de impressoras.</p>";
+                    });
+            })
+            .catch(error => {
+                console.error("Erro ao carregar o modal de impressão:", error);
+                alert("Erro ao carregar o modal.");
+            });
+    };
+
+    function startPrinting(printerIp, fileName) {
+        if (!printerIp || !fileName) {
+            alert("Erro: IP da impressora ou nome do arquivo está faltando.");
+            return;
+        }
+        
+        console.log("Iniciando impressão com:", printerIp, fileName); // Log para depuração
+        fetch('/start_print', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                printer_ip: printerIp,
+                file_name: fileName,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Impressão iniciada com sucesso!");
+            } else {
+                alert("Erro ao iniciar impressão: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao enviar comando de impressão:", error);
+            alert("Erro ao enviar comando de impressão.");
+        });
+    }
+        
+        
 
 });

@@ -4,6 +4,7 @@ from printer_state import get_all_printer_statuses, get_printer_status # Status 
 from database import create_tables
 from printer_manager import get_all_printers, add_printer, remove_printer, update_printer # Gerenciador de Imprpessoras
 from upload import handle_file_upload  # Importa a função de upload
+from printing import start_printing_on_printer
 import os
 
 app = Flask(__name__)
@@ -103,7 +104,6 @@ def upload_file():
     """Rota para realizar o upload do arquivo."""
     return handle_file_upload()
 
-
 @app.route('/list_files', methods=['GET'])
 def list_files():
     try:
@@ -112,8 +112,6 @@ def list_files():
         return jsonify({"success": True, "files": files})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
-
-
 
 @app.route('/delete_file', methods=['POST'])
 def delete_file():
@@ -135,6 +133,54 @@ def delete_file():
             return jsonify({"success": False, "message": f"Erro ao excluir arquivo: {str(e)}"}), 500
     else:
         return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
+
+
+
+# Rota para abrir modal de impressão
+@app.route('/get_print_modal', methods=['GET'])
+def get_print_modal():
+    
+    return render_template('impressao.html')
+
+
+# Retorna a lista de impressoras disponíveis.
+@app.route('/list_printers', methods=['GET'])
+def list_printers():
+    """Retorna a lista de impressoras disponíveis."""
+    try:
+        printers = get_all_printers()  # Função que retorna a lista de impressoras
+        return jsonify({"success": True, "printers": printers})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# Inicia a impressão em uma impressora específica.
+@app.route('/start_print', methods=['POST'])
+def start_print():
+    data = request.get_json()
+    print("Dados recebidos:", data)  # Log para depuração
+    printer_ip = data.get('printer_ip')
+    file_name = data.get('file_name')
+
+    # Verifique se os parâmetros foram enviados
+    if not printer_ip or not file_name:
+        return jsonify({
+            "success": False,
+            "message": "Parâmetros 'printer_ip' e 'file_name' são obrigatórios."
+        }), 400
+
+    try:
+        success = start_printing_on_printer(printer_ip, file_name)
+        if success:
+            return jsonify({"success": True, "message": "Impressão iniciada com sucesso!"})
+        else:
+            return jsonify({"success": False, "message": "Erro ao iniciar impressão."})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
+
+
+
+
+
 
 
 if __name__ == "__main__":
