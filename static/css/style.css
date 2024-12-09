@@ -4,151 +4,167 @@ html, body {
     height: 100%;
 }
 
-body{
-    
+body {
+
+    background-image: linear-gradient(black, #08003e);
+
     display: flex;
     flex-direction: column;
     margin: 0;
-    padding: 0;
-  
+    padding: 5px;
     min-height: 100vh;
+
+    color: azure;
 
 }
 
 .rodape {
-    display: flex;
-    flex-direction: column;
+    
     text-align: center;
-    border-radius: 3px 3px 0 0;
-    color: #000;
-    background-color: hsl(0, 100%, 50%);
+    
     width: 100%;
-    height: 10em;
     
     position: fixed;
     bottom: 0;
-    left: 0; /* Para garantir que o rodapé fique alinhado à esquerda */
-    
-    border-top: solid var(--footBorderColor) 10px;
-
+    left: 0;
+   
+    border-top: whitesmoke solid 1px;
+   
     font-size: 11px;
+    margin: 0;
+    padding: 0;
+}
 
-    margin: 0; /* Remove qualquer margem */
-    padding: 0; /* Remove qualquer padding */
+.rodape a{
+
+    text-decoration: none;
+    color: azure;
 
 }
 
+.main-content {
+    display: flex;
+    justify-content: space-between;  /* Distribui o conteúdo igualmente entre as divs */
+    gap: 1%; /* Espaçamento entre as divs */
+    flex-wrap: wrap; /* Permite que as divs se ajustem em telas menores */
+}
 
+.impressoras,
+.acoes {
+    flex: 1;  /* Faz com que as divs cresçam para ocupar o espaço disponível */  
+}
 
-.impressora{
+@media (max-width: 768px) {
+    .impressoras,
+    .acoes {
+        max-width: 100%;  /* Faz com que as divs ocupem toda a largura disponível em telas menores */
+    }
+}
 
+.impressoras {
+
+    max-width: 75%;
+
+}
+
+.impressora {
     border-style: solid;
-
-    margin-left: 50px;
-
+    margin-left: 10px;
+    margin-top: 10px;
     display: inline-block;
-
-
     height: 350px;
-
     width: 300px;
-
     border-radius: 10px;
-
 }
 
 .printing {
-    border-color: blue;
+    border-color: #2090ff;
+}
+
+.printing:hover {
+    border-color: #20c9ff;
 }
 
 .operational {
     border-color: green;
 }
 
+.operational:hover {
+    border-color: greenyellow;
+}
+
+.acoes{
+
+    max-width: 23%;
+
+
+}
+
+.printerError {
+    
+    border: 2px solid #ccc;
+    border-radius: 10px;
+
+    padding: 3px;
+    
+}
+
 .error {
     border-color: red;
 }
 
-.nomeImpressora{
-
+.nomeImpressora {
     text-align: center;
-
 }
 
-.conteudo{
-    
+.conteudo {
     margin-left: 10px;
     margin-right: 10px;
-
 }
 
-.camera{
-
-    
-    width: 100%;
-    /*max-width: 600px;*/
-
+.camera {
+    height: 210px;
+    width: 280px;
 }
 
 .error-image {
+    
+    fill: azure;
+}
 
-    width: 150px;
+.acoes {
+    padding: 2px;
+}
+
+.arquivos {
+
+    border: 2px solid #ccc;
+    border-radius: 10px;
+
+    padding: 3px;
 
 }
 
-/* The Modal (background) */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  }
-  
-  /* Modal Content/Box */
-  .modal-content {
-    background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-  }
-  
-  /* The Close Button */
-  .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-  }
-  
-  .close:hover,
-  .close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .upload-area {
-    width: 100%;
-    height: 200px;
+.upload-area {
+    
+    height: 150px;
     border: 2px dashed #ccc;
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    color: #666;
+    color: whitesmoke;
     font-size: 16px;
+
+    margin: 3px;
+
 }
 
 .upload-area:hover {
     border-color: #4CAF50;
+
+    color: #4CAF50;
 }
 
 #fileList {
@@ -156,22 +172,30 @@ body{
 }
 
 .file-item {
-    margin: 10px 0;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    margin: 5px 0;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
 }
 
-table, th, td {
-    border: 1px solid black;
+
+.tablePrinters, th, td{
+
+    border: 1px solid whitesmoke;
     border-collapse: collapse;
     text-align: center;
-  }
 
-table{
+    border-radius: 15px;
+
+}
+
+table {
     width: 100%;
 }
 
-.btnTable{
-    width: 40%;
+.editPrinterForm{
+
+    text-align: center;
+
 }
+
+
