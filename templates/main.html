@@ -7,6 +7,8 @@
         <meta charset="UTF-8">
 
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
 
         <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
@@ -32,16 +34,16 @@
 
         </div>
 
-        <!--
-        <footer class="">
+        
+        <footer class="rodape">
 
             <div id="copyright">
                 <h4>&copy; BRIDGE LAB - 2024</h4>
-                <h4>DESENVOLVIDO POR GUILHERME FROES</h4>
+                <h4>DESENVOLVIDO POR <a href="https://github.com/GuilhermeHMFroes" target="_blank">GUILHERME FROES</a></h4>
             </div>
         
         </footer>
-        -->
+        
 
         <script></script>
         {% block script %}

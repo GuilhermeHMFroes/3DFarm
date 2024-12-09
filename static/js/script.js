@@ -95,6 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // Preenche os campos do formulário com os dados da impressora
                 document.getElementById("editNome").value = printerNome;
+                document.getElementById("editIp").value = printerIp;
                 document.getElementById("editApi").value = printerApi;
                 document.getElementById("editPort").value = printerPort;
                 document.getElementById("editWebcam").value = printerWebcam;
@@ -267,8 +268,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 const fileItem = document.createElement("div");
                 fileItem.classList.add("file-item");
                 fileItem.innerHTML = `
-                    <span class="file-name">${data.fileName}</span>
+                    <span class="file-name">${data.fileName}</span><br><br>
                     <button class="btn deleteFile" data-file="${data.fileName}">Excluir</button>
+                    <button class="btn printFile" data-file="${fileName}">Imprimir</button>
                 `;
                 fileList.appendChild(fileItem);
                 attachDeleteHandler();  // Garantir que o evento de exclusão seja ligado novamente
@@ -288,7 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const fileItem = document.createElement("div");
         fileItem.classList.add("file-item");
         fileItem.innerHTML = `
-            <span class="file-name">${fileName}</span>
+            <span class="file-name">${fileName}</span><br><br>
             <button class="btn deleteFile" data-file="${fileName}">Excluir</button>
             <button class="btn printFile" data-file="${fileName}">Imprimir</button>
         `;
