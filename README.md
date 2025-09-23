@@ -1,7 +1,7 @@
 # Processo de instalação dos pacotes necessários
 
 Guia para instalar as dependências do software.
-Verifique se o computador já estaaja istalado o `python3`, `pip` e `nvm` na última versão.
+Verifique se o computador já estaaja istalado o `python3`, `pip` e `npm` na última versão.
 
 ## Linux
 
