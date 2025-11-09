@@ -1,13 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+/* src/index.css */
 
-body {
-  margin: 0;
-  font-family: 'Montserrat'; /* Aplica a fonte */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* 1. Importar a fonte Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* 2. Importar as bases do Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. Definir estilos globais do 'body' */
+@layer base {
+  body {
+    /* Usando as suas cores e a imagem de fundo que definimos no config */
+    @apply bg-farm-dark-blue text-farm-light-grey;
+    @apply bg-farm-bg bg-cover bg-center bg-fixed;
+  }
 }

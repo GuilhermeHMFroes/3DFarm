@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#banco de dados
+
+backend/fazenda.db
+
+#Arquivos Gcode
+
+#backend/uploads/
+
 # C extensions
 *.so
 
