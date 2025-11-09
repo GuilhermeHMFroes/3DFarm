@@ -9,7 +9,7 @@ backend/fazenda.db
 
 #Arquivos Gcode
 
-#backend/uploads/
+backend/uploads/
 
 # C extensions
 *.so
