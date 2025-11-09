@@ -187,6 +187,33 @@ def api_register_printer():
     register_or_update_printer(data.get("nome_impressora"), ip, token)
     return jsonify({"success": True})
 
+#Deletar Impressora
+@app.route("/api/printer/delete/<int:printer_id>", methods=["DELETE"])
+def api_delete_printer(printer_id):
+    """
+    Apaga uma impressora do banco de dados usando o ID dela.
+    """
+    try:
+        conn = db.get_conn()
+        cur = conn.cursor()
+        
+        # Executa o comando DELETE no banco de dados
+        cur.execute("DELETE FROM printers WHERE id = ?", (printer_id,))
+        
+        conn.commit()
+        
+        # Verifica se algo foi realmente apagado
+        if cur.rowcount == 0:
+            conn.close()
+            return jsonify({"success": False, "message": "Impressora não encontrada"}), 404
+            
+        conn.close()
+        return jsonify({"success": True, "message": "Impressora excluída"})
+
+    except Exception as e:
+        # (Opcional: logar o erro "e" no seu servidor)
+        return jsonify({"success": False, "message": "Erro interno do servidor"}), 500
+
 # -----------------------
 # Serve React build
 # -----------------------
