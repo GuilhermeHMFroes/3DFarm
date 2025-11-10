@@ -9,6 +9,7 @@ import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy } from '
 
 // Logo (O caminho está correto, baseado na sua imagem)
 import logoIcon from './assets/icon-3dfarm.png'; 
+import logoPrincipal from './assets/logoTrasnparente.png'; 
 
 // --- Componentes de UI Reutilizáveis ---
 // (Podemos mantê-los aqui ou movê-los para a pasta /components)
@@ -171,7 +172,7 @@ function App() {
           rounded-xl backdrop-blur-lg">
           
           <div className="flex items-center gap-4">
-            <img src={logoIcon} alt="3D Farm Logo" className="h-10" />
+            <img src={logoPrincipal} alt="3D Farm Logo" className="h-10" />
             <h1 className="text-2xl font-bold text-farm-light-grey m-0">
               3D Print Farm
             </h1>
@@ -190,7 +191,7 @@ function App() {
           
           {/* Card 1: Impressoras Conectadas */}
           <Card>
-            <CardTitle icon={<FaPrint />} title="Impressoras Conectadas" />
+            <CardTitle icon={<FaPrint />} title="Impressoras Cadastradas" />
             <ul className="space-y-3 max-h-96 overflow-y-auto">
               
               {printers.length === 0 && <p className="text-farm-medium-grey">Nenhuma impressora registrada.</p>}
