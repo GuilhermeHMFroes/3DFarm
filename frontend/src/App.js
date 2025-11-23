@@ -1,21 +1,22 @@
 // src/App.js
 
 import React, { useState, useEffect, useCallback } from 'react';
-import AddPrinterModal from './components/AddPrinterModal';
+import AddPrinterModal from './components/AddPrinterModal'; // <-- Importa o modal de criar uma impressora
 import axios from 'axios'; // Para o upload e API
 
-// Ícones (Instale com: npm install react-icons)
-import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy } from 'react-icons/fa';
+import SelectFileModal from './components/SelectFileModal'; // <--- Importa o Modal para imprimir os g-code
 
-// Logo (O caminho está correto, baseado na sua imagem)
+// Ícones (Instale com: npm install react-icons)
+import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay } from 'react-icons/fa';
+
+// Logo
 import logoIcon from './assets/icon-3dfarm.png'; 
 import logoPrincipal from './assets/logoTrasnparente.png'; 
 
 // --- Componentes de UI Reutilizáveis ---
-// (Podemos mantê-los aqui ou movê-los para a pasta /components)
 
 const Card = ({ children }) => (
-  <div className="bg-farm-dark-blue/80 p-6 rounded-xl border border-farm-medium-grey/50 backdrop-blur-lg">
+  <div className="bg-farm-dark-blue/80 p-6 rounded-xl border border-farm-medium-grey/50 backdrop-blur-lg ">
     {children}
   </div>
 );
@@ -31,9 +32,15 @@ const CardTitle = ({ icon, title }) => (
 function App() {
   const [printers, setPrinters] = useState([]);
   const [queue, setQueue] = useState([]);
+  const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadMessage, setUploadMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [activePrinters, setActivePrinters] = useState([]);
+  const [idlePrinters, setIdlePrinters] = useState([]);
+  const [disconnectedPrinters, setDisconnectedPrinters] = useState([]);
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [selectedPrinterForPrint, setSelectedPrinterForPrint] = useState(null);
 
   // --- LÓGICA DE DADOS ---
 
@@ -44,6 +51,12 @@ function App() {
       .then(response => {
         if (response.data.success) {
           setPrinters(response.data.printers);
+
+          const allPrinters = response.data.printers;
+
+          setPrinters(allPrinters);
+
+          categorizePrinters(allPrinters);
         }
       })
       .catch(error => console.error("Erro ao buscar impressoras:", error));
@@ -59,11 +72,29 @@ function App() {
       .catch(error => console.error("Erro ao buscar fila:", error));
   }, []);
 
-  // Executa as funções quando o componente carrega
+  // Lista os arquivos G-code Carregados
+  const fetchFiles = useCallback(() => {
+    axios.get('/api/files')
+      .then(response => {
+        if (response.data.success) {
+          setFiles(response.data.files);
+        }
+      })
+      .catch(error => console.error("Erro ao buscar arquivos:", error));
+  }, []);
+
   useEffect(() => {
     fetchPrinters();
+    fetchFiles();
     fetchQueue();
-  }, [fetchPrinters, fetchQueue]); // Re-executa se estas funções mudarem
+
+    const interval = setInterval(() => {
+      fetchPrinters();
+      fetchFiles();
+      fetchQueue();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [fetchPrinters, fetchFiles]);
 
   // Função que o Modal vai chamar
   const handlePrinterAdded = (newPrinter) => {
@@ -88,23 +119,18 @@ function App() {
 
     setUploadMessage('Enviando...');
 
-    // 1. Envia o ficheiro para /upload
+    // 1. Envia o ficheiro para a pasta /uploads
     axios.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then(response => {
-      // 2. Se o upload funcionou, envia para a fila /api/enqueue
-      setUploadMessage(`Sucesso: ${response.data.fileName} enviado!`);
-      setSelectedFile(null); // Limpa o ficheiro
+      // Sucesso!
+      setUploadMessage(`Sucesso: ${response.data.fileName} carregado!`);
+      setSelectedFile(null); // Limpa o ficheiro do input
       
-      return axios.post('/api/enqueue', {
-        fileName: response.data.fileName
-      });
-    })
-    .then(enqueueResponse => {
-      // 3. Se entrou na fila, atualiza a lista da fila
-      console.log('Adicionado à fila:', enqueueResponse.data);
-      fetchQueue(); // Atualiza a lista
+      // IMPORTANTE: Removemos a chamada para /api/enqueue aqui.
+      // Agora apenas atualizamos a lista visual de arquivos.
+      fetchFiles(); 
     })
     .catch(error => {
       setUploadMessage('Erro ao enviar o ficheiro.');
@@ -138,18 +164,123 @@ function App() {
       });
   };
 
+  //Função de  copiar o token
   const handleCopyToken = (token) => {
-    // A API 'clipboard.writeText' é a forma moderna de copiar
-    navigator.clipboard.writeText(token)
-      .then(() => {
-        // Sucesso!
-        alert("Token copiado para a área de transferência!");
-      })
-      .catch(err => {
-        // Erro (pode acontecer se o site não for 'localhost' ou 'https')
-        console.error("Falha ao copiar o token: ", err);
+    // Tenta o método moderno (só funciona em HTTPS ou localhost)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(token)
+        .then(() => alert("Token copiado!"))
+        .catch(() => copyToClipboardFallback(token)); // Se falhar, tenta o método antigo
+    } else {
+      // Se o navegador não suportar o moderno, vai direto para o antigo
+      copyToClipboardFallback(token);
+    }
+  };
+
+  // Função auxiliar para o método "antigo" (funciona em HTTP)
+  const copyToClipboardFallback = (text) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // Torna a caixa invisível para o usuário, mas visível para o navegador
+    textArea.style.position = "fixed"; 
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert("Token copiado!");
+      } else {
         alert("Falha ao copiar o token.");
-      });
+      }
+    } catch (err) {
+      console.error("Erro ao copiar: ", err);
+      alert("Erro ao copiar. Por favor, copie manualmente.");
+    }
+
+    document.body.removeChild(textArea);
+  };
+
+  //Sistemade sepação das impressoras nos cards de acordo com os seus status
+
+  const categorizePrinters = (printerList) => {
+    const now = new Date();
+    const active = [];
+    const idle = [];
+    const disconnected = [];
+
+    printerList.forEach(printer => {
+      // 1. Verifica se está desconectada (sem sinal há mais de 2 min)
+      const lastSeenDate = printer.last_seen ? new Date(printer.last_seen + "Z") : null;
+      
+      if (!lastSeenDate || (now - lastSeenDate > 120000)) { 
+        disconnected.push(printer);
+        return; 
+      }
+
+      // 2. Lê o status
+      let statusData = {};
+      try {
+        if (printer.last_status) {
+          statusData = JSON.parse(printer.last_status);
+        }
+      } catch (e) {
+        console.error("Erro ao ler status", e);
+      }
+
+      // 3. Verifica se está imprimindo (CORREÇÃO AQUI)
+      // Convertemos tudo para MAIÚSCULAS para garantir que funciona sempre
+      const rawState = statusData.estado || "";
+      const state = rawState.toUpperCase(); 
+
+      // Lista de estados que consideramos "ATIVOS"
+      if (state === "PRINTING" || state === "PAUSED" || state === "PAUSING" || state === "RESUMING" || state === "FINISHING") {
+        active.push(printer);
+      } else {
+        // Se não está imprimindo nem desconectada, está Ociosa (OPERATIONAL)
+        idle.push(printer);
+      }
+    });
+
+    setActivePrinters(active);
+    setIdlePrinters(idle);
+    setDisconnectedPrinters(disconnected);
+  };
+
+  // Abre o modal e guarda qual impressora foi selecionada
+  const handleOpenPrintModal = (printer) => {
+    setSelectedPrinterForPrint(printer);
+    setShowFileModal(true);
+  };
+
+  // Quando o usuário escolhe o arquivo no modal
+  const handleStartPrint = (filename) => {
+    if (!selectedPrinterForPrint) return;
+
+    // Envia para a API /api/enqueue com o target_token da impressora específica
+    axios.post('/api/enqueue', {
+      fileName: filename,
+      target_token: selectedPrinterForPrint.token // <--- O PULO DO GATO: Envia direto para esta impressora
+    })
+    .then(response => {
+      if (response.data.success) {
+        alert(`Arquivo "${filename}" enviado para ${selectedPrinterForPrint.name}!`);
+        setShowFileModal(false); // Fecha o modal
+        setSelectedPrinterForPrint(null);
+        fetchQueue(); // Atualiza a fila
+      } else {
+        alert("Erro: " + response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Erro ao enviar comando de impressão.");
+    });
   };
 
   return (
@@ -159,6 +290,15 @@ function App() {
         <AddPrinterModal
           onClose={() => setShowModal(false)}
           onPrinterAdded={handlePrinterAdded}
+        />
+      )}
+
+      {/* Modal de Seleção de Arquivo */}
+      {showFileModal && selectedPrinterForPrint && (
+        <SelectFileModal 
+          printerName={selectedPrinterForPrint.name}
+          onClose={() => setShowFileModal(false)}
+          onSelectFile={handleStartPrint}
         />
       )}
     
@@ -236,18 +376,17 @@ function App() {
           
           {/* Card 2: Fila de Impressão */}
           <Card>
-            <CardTitle icon={<FaList />} title="Fila de Impressão" />
+            <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
             <ul className="space-y-3 max-h-96 overflow-y-auto">
-              {queue.length === 0 && <p className="text-farm-medium-grey">Fila vazia.</p>}
-              {queue.map(item => (
-                <li key={item.id} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg">
+              {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
+
+              {files.map((filename, index) => (
+                <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg border-b border-dashed border-farm-medium-grey">
                   <div className="flex items-center gap-3 truncate">
                     <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
-                    <span className="truncate">{item.filename}</span>
+                    <span className="truncate" title={filename}>{filename}</span>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-farm-orange text-farm-dark-blue rounded-full font-bold">
-                    {item.status}
-                  </span>
+                  {/* Aqui você pode adicionar um botão de download ou excluir no futuro */}
                 </li>
               ))}
             </ul>
@@ -299,6 +438,71 @@ function App() {
                 {uploadMessage}
               </p>
             )}
+          </Card>
+          
+          {/* Card 4 : Impressoras Ativas */}
+          <Card className="border-t-4 border-t-green-500">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
+                <FaCog className="animate-spin" /> Imprimindo
+              </h3>
+              <span className="text-3xl font-bold">{activePrinters.length}</span>
+            </div>
+            <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+              {activePrinters.map(p => (
+                <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                  {p.name || 'Impressora Sem Nome'}
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          {/* Card 5: Impressoras Ociosas */}
+          <Card className="border-t-4 border-t-farm-medium-blue">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
+                <FaCheckCircle /> Ociosas
+              </h3>
+              <span className="text-3xl font-bold">{idlePrinters.length}</span>
+            </div>
+            
+            <ul className="space-y-2 max-h-40 overflow-y-auto">
+              {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma ociosa.</p>}
+              
+              {idlePrinters.map(p => (
+                <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
+                  <span className="truncate flex-1" title={p.name}>
+                    {p.name || 'Sem Nome'}
+                  </span>
+                  
+                  {/* BOTÃO DE IMPRIMIR */}
+                  <button 
+                    onClick={() => handleOpenPrintModal(p)}
+                    className="ml-2 bg-farm-medium-blue text-white p-1.5 rounded hover:bg-blue-600 transition-colors"
+                    title="Imprimir nesta impressora"
+                  >
+                    <FaPlay size={10} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          {/* Card 6: Impressoras Desconectadas */}
+          <Card className="border-t-4 border-t-red-500">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
+                <FaExclamationTriangle /> Desconectadas
+              </h3>
+              <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
+            </div>
+            <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+              {disconnectedPrinters.map(p => (
+                <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                  {p.name || 'Impressora Sem Nome'}
+                </li>
+              ))}
+            </ul>
           </Card>
 
         </main>
