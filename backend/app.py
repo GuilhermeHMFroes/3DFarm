@@ -28,19 +28,47 @@ db.init_db()
 def row_to_dict(row):
     return {k: row[k] for k in row.keys()} if row else None
 
-def register_or_update_printer(name, ip, token):
+def row_to_dict(row):
+    return {k: row[k] for k in row.keys()} if row else None
+
+# NOVO: Função exclusiva para CRIAR (usada apenas pelo botão do site)
+def create_printer_entry(name, ip, token):
     conn = db.get_conn()
     cur = conn.cursor()
-    cur.execute("SELECT id FROM printers WHERE token = ?", (token,))
-    if cur.fetchone():
-        cur.execute("""UPDATE printers
-                       SET name=?, ip=?, last_seen=CURRENT_TIMESTAMP
-                       WHERE token=?""", (name, ip, token))
-    else:
-        cur.execute("INSERT INTO printers (name, ip, token) VALUES (?,?,?)",
-                    (name, ip, token))
+    # Tenta inserir. Se o token já existir (muito raro), o SQLite vai dar erro, o que é seguro.
+    cur.execute("INSERT INTO printers (name, ip, token) VALUES (?,?,?)",
+                (name, ip, token))
     conn.commit()
     conn.close()
+
+# NOVO: Função exclusiva para CONECTAR (usada pelo plugin)
+def update_printer_connection(token, ip, status_json=None):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    
+    # 1. Verifica se o token existe no banco
+    cur.execute("SELECT id FROM printers WHERE token = ?", (token,))
+    row = cur.fetchone()
+    
+    # Se não encontrou o token, retorna Falso (bloqueia a conexão)
+    if not row:
+        conn.close()
+        return False
+
+    # 2. Se existe, atualiza IP, Visto Por Último e Status.
+    #    NOTA: NÃO atualizamos o campo 'name'. O nome é protegido.
+    if status_json:
+        cur.execute("""UPDATE printers 
+                       SET ip=?, last_seen=CURRENT_TIMESTAMP, last_status=? 
+                       WHERE token=?""", (ip, status_json, token))
+    else:
+        cur.execute("""UPDATE printers 
+                       SET ip=?, last_seen=CURRENT_TIMESTAMP 
+                       WHERE token=?""", (ip, token))
+    
+    conn.commit()
+    conn.close()
+    return True # Sucesso
 
 def enqueue_file(filename, filepath, target_token=None):
     conn = db.get_conn()
@@ -56,6 +84,21 @@ def enqueue_file(filename, filepath, target_token=None):
 def pop_next_for_token(token):
     conn = db.get_conn()
     cur = conn.cursor()
+
+    # --- DEBUG ANTES DA BUSCA ---
+    print(f"DEBUG DB: Procurando trabalho para token: '{token}'")
+    
+    # Vamos ver o que TEM na fila, só por curiosidade
+    cur.execute("SELECT id, target_token, status FROM queue WHERE status='queued'")
+    todos = cur.fetchall()
+    print(f"DEBUG DB: Itens na fila agora: {[dict(r) for r in todos]}")
+    # ----------------------------
+
+    cur.execute("""SELECT * FROM queue 
+                   WHERE status='queued' AND target_token=? 
+                   ORDER BY created_at LIMIT 1""", (token,))
+    row = cur.fetchone()
+
     cur.execute("""SELECT * FROM queue
                    WHERE status='queued' AND target_token=?
                    ORDER BY created_at LIMIT 1""", (token,))
@@ -83,9 +126,21 @@ def api_generate_token():
     data = request.get_json() or {}
     name = data.get("name")
     ip = data.get("ip")
+    
+    # Validação extra: Nome é obrigatório para gerar token
+    if not name:
+        return jsonify({"success": False, "message": "Nome da impressora é obrigatório"}), 400
+
     token = generate_token()
-    register_or_update_printer(name, ip, token)
-    return jsonify({"success": True, "token": token})
+    
+    try:
+        # Usa a função de CRIAÇÃO
+        create_printer_entry(name, ip, token)
+        return jsonify({"success": True, "token": token})
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "message": "Erro de integridade (token duplicado?)"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/api/printers")
 def api_list_printers():
@@ -95,6 +150,20 @@ def api_list_printers():
     rows = cur.fetchall()
     conn.close()
     return jsonify({"success": True, "printers": [row_to_dict(r) for r in rows]})
+
+@app.route("/api/files")
+def api_list_files():
+    """Lista todos os arquivos .gcode ou .gco na pasta uploads"""
+    try:
+        # Pega todos os arquivos terminados em .gcode ou .gco
+        files = []
+        for ext in ["*.gcode", "*.gco"]:
+            for f in UPLOAD_FOLDER.glob(ext):
+                files.append(f.name)
+        
+        return jsonify({"success": True, "files": sorted(files)})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
@@ -114,10 +183,22 @@ def api_enqueue():
     data = request.get_json() or {}
     fileName = data.get("fileName")
     target = data.get("target_token")
+    
+    # --- DEBUG NOVO ---
+    print(f"DEBUG ENQUEUE: Recebi arquivo '{fileName}'")
+    print(f"DEBUG ENQUEUE: Token Alvo recebido: '{target}'")
+    # ------------------
+
     filepath = UPLOAD_FOLDER / (fileName or "")
     if not fileName or not filepath.exists():
         return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
+    
     qid = enqueue_file(fileName, filepath, target)
+    
+    # --- DEBUG NOVO ---
+    print(f"DEBUG ENQUEUE: Salvo no banco com ID: {qid}")
+    # ------------------
+    
     return jsonify({"success": True, "queue_id": qid})
 
 @app.route("/api/queue")
@@ -138,31 +219,52 @@ def api_status():
     token = data.get("token")
     if not token:
         return jsonify({"success": False, "message": "token obrigatório"}), 400
+        
     ip = data.get("ip") or request.remote_addr
-    register_or_update_printer(data.get("nome_impressora"), ip, token)
-    conn = db.get_conn()
-    cur = conn.cursor()
-    cur.execute("UPDATE printers SET last_seen=CURRENT_TIMESTAMP, last_status=? WHERE token=?",
-                (json.dumps(data), token))
-    conn.commit()
-    conn.close()
-    return jsonify({"success": True})
+    
+    # Tenta atualizar o status. Se o token não existir, retorna False.
+    # Note que removemos 'data.get("nome_impressora")' da lógica de update
+    authorized = update_printer_connection(token, ip, json.dumps(data))
+    
+    if authorized:
+        return jsonify({"success": True})
+    else:
+        # Retorna 401 Unauthorized para o plugin saber que algo está errado
+        return jsonify({"success": False, "message": "Token inválido ou impressora excluída"}), 401
 
 @app.route("/api/fila")
 def api_fila():
     token = request.args.get("token")
     if not token:
         return jsonify({"success": False, "message": "token obrigatório"}), 400
+    
+    # --- DEBUG ---
+    print(f"DEBUG: Impressora com token {token[:5]}... perguntou por trabalho.")
+    
     item = pop_next_for_token(token)
+    
     if not item:
+        # --- DEBUG ---
+        print(f"DEBUG: Nenhum trabalho encontrado para este token.")
         return jsonify({"novo_arquivo": False})
+    
+    # --- DEBUG ---
+    print(f"DEBUG: TRABALHO ENCONTRADO! ID: {item['id']}, Arquivo: {item['filename']}")
+
     mark_queue_status(item["id"], "sent")
     filename = os.path.basename(item["filepath"])
+    
+    # IMPORTANTE: Garante que a URL usa o IP externo, não localhost
     arquivo_url = request.url_root.rstrip("/") + f"/uploads/{filename}"
-    return jsonify({"novo_arquivo": True,
-                    "arquivo_url": arquivo_url,
-                    "queue_id": item["id"],
-                    "filename": filename})
+    
+    print(f"DEBUG: Enviando URL: {arquivo_url}")
+    
+    return jsonify({
+        "novo_arquivo": True,
+        "arquivo_url": arquivo_url,
+        "queue_id": item["id"],
+        "filename": filename
+    })
 
 @app.route("/api/queue/confirm", methods=["POST"])
 def api_queue_confirm():
@@ -183,9 +285,16 @@ def api_register_printer():
     token = data.get("token")
     if not token:
         return jsonify({"success": False, "message": "token obrigatório"}), 400
+        
     ip = data.get("ip") or request.remote_addr
-    register_or_update_printer(data.get("nome_impressora"), ip, token)
-    return jsonify({"success": True})
+    
+    # Tenta conectar. Se o token não existir, retorna False.
+    authorized = update_printer_connection(token, ip)
+    
+    if authorized:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "message": "Token inválido ou impressora excluída"}), 401
 
 #Deletar Impressora
 @app.route("/api/printer/delete/<int:printer_id>", methods=["DELETE"])
