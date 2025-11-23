@@ -283,6 +283,50 @@ function App() {
     });
   };
 
+  // Função para apagar arquivo G-code
+  const handleDeleteFile = (filename) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o arquivo "${filename}"?`)) {
+      return;
+    }
+
+    axios.delete(`/api/files/${filename}`)
+      .then(response => {
+        if (response.data.success) {
+          fetchFiles(); // Atualiza a lista
+        }
+      })
+      .catch(error => {
+        console.error("Erro ao apagar arquivo:", error);
+        alert("Erro ao apagar arquivo.");
+      });
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Quando o arquivo entra na área ou está em cima dela
+  const handleDragOver = (e) => {
+    e.preventDefault(); // IMPORTANTE: Impede o navegador de abrir a aba
+    setIsDragging(true);
+  };
+
+  // Quando o arquivo sai da área
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  // Quando você solta o arquivo
+  const handleDrop = (e) => {
+    e.preventDefault(); // IMPORTANTE: Impede o navegador de abrir a aba
+    setIsDragging(false);
+    
+    // Pega o arquivo que foi solto
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setSelectedFile(e.dataTransfer.files[0]);
+      setUploadMessage('');
+    }
+  };
+
   return (
     <>
       {/* O Modal (agora controlado pelo state 'showModal') */}
@@ -373,20 +417,30 @@ function App() {
               ))}
             </ul>
           </Card>
+
+          
           
           {/* Card 2: Fila de Impressão */}
           <Card>
             <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
             <ul className="space-y-3 max-h-96 overflow-y-auto">
               {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
-
+              
               {files.map((filename, index) => (
-                <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg border-b border-dashed border-farm-medium-grey">
+                <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
                   <div className="flex items-center gap-3 truncate">
                     <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
                     <span className="truncate" title={filename}>{filename}</span>
                   </div>
-                  {/* Aqui você pode adicionar um botão de download ou excluir no futuro */}
+                  
+                  {/* Botão de Excluir Arquivo */}
+                  <button 
+                    onClick={() => handleDeleteFile(filename)}
+                    className="text-red-500 hover:text-red-300 p-2 transition-colors"
+                    title="Apagar Arquivo"
+                  >
+                    <FaTrash />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -398,46 +452,50 @@ function App() {
             
             <label 
               htmlFor="file-upload" 
-              className="flex flex-col items-center justify-center w-full h-48 px-4 border-2 border-dashed border-farm-medium-grey rounded-lg cursor-pointer bg-farm-dark-blue/50 hover:bg-farm-dark-blue"
+              // Adicionamos os eventos aqui
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`
+                flex flex-col items-center justify-center w-full h-48 px-4 
+                border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                ${isDragging 
+                  ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
+                  : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
+                }
+              `}
             >
-              <FaUpload className="text-4xl text-farm-medium-grey" />
-              <p className="mt-2 text-farm-medium-grey">Arraste um ficheiro G-code</p>
-              <p className="text-xs text-farm-medium-grey">ou clique para selecionar</p>
+              <FaUpload className={`text-4xl mb-2 transition-colors ${isDragging ? 'text-farm-orange' : 'text-farm-medium-grey'}`} />
+              
+              <p className="text-farm-medium-grey font-medium">
+                {isDragging ? "Solte o arquivo aqui!" : "Arraste um G-code"}
+              </p>
+              
+              {!isDragging && <p className="text-xs text-farm-medium-grey mt-1">ou clique para selecionar</p>}
             </label>
             
-            <input 
-              id="file-upload" 
-              type="file" 
-              className="hidden" 
-              accept=".gcode,.gco" 
-              onChange={handleFileChange}
-            />
-
+            <input id="file-upload" type="file" className="hidden" accept=".gcode,.gco" onChange={handleFileChange} />
+            
+            {/* Visualização do arquivo selecionado */}
             {selectedFile && (
-              <div className="flex justify-between items-center mt-4 p-2 bg-farm-dark-blue rounded-lg">
-                <span className="text-farm-light-grey truncate">{selectedFile.name}</span>
-                <button 
-                  onClick={() => setSelectedFile(null)} 
-                  className="text-red-500 font-bold ml-2 flex-shrink-0"
-                >
-                  X
-                </button>
+              <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
+                <div className="flex items-center gap-2 truncate">
+                   <FaFileCode className="text-farm-orange flex-shrink-0" />
+                   <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
+                </div>
+                <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
               </div>
             )}
             
             <button 
-              onClick={handleUpload}
-              disabled={!selectedFile}
-              className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleUpload} 
+              disabled={!selectedFile} 
+              className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02]"
             >
-              Enviar para a Fila
+              Carregar G-Code
             </button>
             
-            {uploadMessage && (
-              <p className="text-center mt-3 font-bold text-farm-orange">
-                {uploadMessage}
-              </p>
-            )}
+            {uploadMessage && <p className="text-center mt-3 font-bold text-farm-orange text-sm animate-pulse">{uploadMessage}</p>}
           </Card>
           
           {/* Card 4 : Impressoras Ativas */}
@@ -449,11 +507,16 @@ function App() {
               <span className="text-3xl font-bold">{activePrinters.length}</span>
             </div>
             <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+              {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
+
               {activePrinters.map(p => (
                 <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                  {p.name || 'Impressora Sem Nome'}
+                  <span className="truncate flex-1" title={p.name}>
+                    {p.name || 'Impressora Sem Nome'}
+                  </span>
                 </li>
               ))}
+
             </ul>
           </Card>
 
@@ -467,7 +530,7 @@ function App() {
             </div>
             
             <ul className="space-y-2 max-h-40 overflow-y-auto">
-              {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma ociosa.</p>}
+              {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
               
               {idlePrinters.map(p => (
                 <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
@@ -497,11 +560,16 @@ function App() {
               <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
             </div>
             <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+              {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
+
               {disconnectedPrinters.map(p => (
                 <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                  {p.name || 'Impressora Sem Nome'}
+                  <span className="truncate flex-1" title={p.name}>
+                    {p.name || 'Impressora Sem Nome'}
+                  </span>
                 </li>
               ))}
+
             </ul>
           </Card>
 

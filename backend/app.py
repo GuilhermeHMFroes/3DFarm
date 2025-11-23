@@ -178,6 +178,23 @@ def upload_file():
                     "fileName": f.filename,
                     "fileUrl": f"/uploads/{f.filename}"})
 
+@app.route("/api/files/<filename>", methods=["DELETE"])
+def api_delete_file(filename):
+    """Apaga um arquivo G-code da pasta uploads"""
+    try:
+        # Segurança básica: garante que é apenas o nome do arquivo, sem caminhos (../)
+        filename = os.path.basename(filename)
+        file_path = UPLOAD_FOLDER / filename
+        
+        if file_path.exists():
+            os.remove(file_path)
+            return jsonify({"success": True, "message": f"Arquivo {filename} excluído"})
+        else:
+            return jsonify({"success": False, "message": "Arquivo não encontrado"}), 404
+            
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app.route("/api/enqueue", methods=["POST"])
 def api_enqueue():
     data = request.get_json() or {}
