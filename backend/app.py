@@ -7,6 +7,10 @@ from utils import generate_token
 import json
 import sqlite3
 
+from flask import Response, stream_with_context
+
+import requests
+
 # Caminhos
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / "uploads"
@@ -339,6 +343,107 @@ def api_delete_printer(printer_id):
     except Exception as e:
         # (Opcional: logar o erro "e" no seu servidor)
         return jsonify({"success": False, "message": "Erro interno do servidor"}), 500
+
+# Fazendo proxy com o octprint através do servidor
+
+# 1. ROTA DE COMANDOS (Frontend -> Servidor)
+@app.route("/api/printer/command", methods=["POST"])
+def api_send_command():
+    data = request.get_json() or {}
+    token = data.get("token")
+    cmd = data.get("command") # pause, resume, cancel
+    
+    if not token or not cmd:
+        return jsonify({"success": False, "message": "Dados inválidos"}), 400
+
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO commands (target_token, command) VALUES (?,?)", (token, cmd))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True, "message": f"Comando {cmd} enviado."})
+
+# 2. ROTA PARA O PLUGIN BUSCAR COMANDOS (Plugin -> Servidor)
+@app.route("/api/printer/check_commands")
+def api_check_commands():
+    token = request.args.get("token")
+    if not token: return jsonify({"command": None})
+
+    conn = db.get_conn()
+    cur = conn.cursor()
+    
+    # Pega o comando mais antigo pendente
+    cur.execute("SELECT id, command FROM commands WHERE target_token=? ORDER BY created_at LIMIT 1", (token,))
+    row = cur.fetchone()
+    
+    if row:
+        # Se achou, deleta o comando para não executar duas vezes
+        cmd_id = row["id"]
+        command = row["command"]
+        cur.execute("DELETE FROM commands WHERE id=?", (cmd_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"command": command})
+    
+    conn.close()
+    return jsonify({"command": None})
+
+# 3. PROXY DA WEBCAM (Frontend -> Servidor -> OctoPrint)
+@app.route("/api/proxy/webcam/<token>")
+def proxy_webcam(token):
+    # 1. Busca os dados no Banco
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT ip, webcam_url FROM printers WHERE token = ?", (token,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row or not row["ip"]:
+        return "Impressora offline", 404
+
+    ip = row["ip"]
+    config_url = row["webcam_url"]
+
+    # 2. Constrói a URL Universal
+    # (Trata links relativos, portas, etc, para funcionar com qualquer origem)
+    if not config_url:
+        final_url = f"http://{ip}:8080/?action=stream"
+    elif config_url.startswith("http"):
+        final_url = config_url
+    elif config_url.startswith("/"):
+        final_url = f"http://{ip}{config_url}"
+    elif config_url.startswith(":"):
+        final_url = f"http://{ip}{config_url}"
+    else:
+        final_url = f"http://{ip}/{config_url}"
+
+    # 3. O Proxy de Streaming Otimizado
+    try:
+        # stream=True conecta, mas só baixa os dados se pedirmos (On Demand)
+        req = requests.get(final_url, stream=True, timeout=5)
+
+        # Esta função geradora mantém o fluxo aberto apenas enquanto necessário
+        def generate():
+            try:
+                # Lê pedaços de 1KB da câmera e repassa imediatamente
+                for chunk in req.iter_content(chunk_size=1024):
+                    if chunk:
+                        yield chunk
+            except GeneratorExit:
+                # Isso acontece quando VOCÊ fecha o modal (o cliente desconecta)
+                # O Python fecha a conexão com a câmera automaticamente aqui
+                print(f"DEBUG: Cliente fechou modal. Parando stream de {ip}")
+                req.close()
+            except Exception as e:
+                print(f"Erro no stream: {e}")
+
+        # Retorna a resposta com headers que forçam o vídeo a tocar em tempo real
+        return Response(stream_with_context(generate()), 
+                        mimetype='multipart/x-mixed-replace; boundary=--boundarydonotcross')
+
+    except Exception as e:
+        return f"Erro ao conectar na câmera: {e}", 502
 
 # -----------------------
 # Serve React build

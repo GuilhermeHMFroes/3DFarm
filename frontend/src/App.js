@@ -6,8 +6,10 @@ import axios from 'axios'; // Para o upload e API
 
 import SelectFileModal from './components/SelectFileModal'; // <--- Importa o Modal para imprimir os g-code
 
+import MonitorModal from './components/MonitorModal'; // <--- Importa o Modal para Monitorar a impressora
+
 // Ícones (Instale com: npm install react-icons)
-import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay } from 'react-icons/fa';
+import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay, FaEye } from 'react-icons/fa';
 
 // Logo
 import logoIcon from './assets/icon-3dfarm.png'; 
@@ -41,6 +43,7 @@ function App() {
   const [disconnectedPrinters, setDisconnectedPrinters] = useState([]);
   const [showFileModal, setShowFileModal] = useState(false);
   const [selectedPrinterForPrint, setSelectedPrinterForPrint] = useState(null);
+  const [selectedPrinterForMonitor, setSelectedPrinterForMonitor] = useState(null);
 
   // --- LÓGICA DE DADOS ---
 
@@ -345,6 +348,14 @@ function App() {
           onSelectFile={handleStartPrint}
         />
       )}
+
+      {/* Modal de monitoramento de impressora */}
+      {selectedPrinterForMonitor && (
+        <MonitorModal 
+          printer={selectedPrinterForMonitor} 
+          onClose={() => setSelectedPrinterForMonitor(null)} 
+        />
+      )}
     
       <div className="max-w-7xl mx-auto p-5">
         
@@ -499,15 +510,8 @@ function App() {
           </Card>
           
           {/* Card 4 : Impressoras Ativas */}
-          <Card className="border-t-4 border-t-green-500">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
-                <FaCog className="animate-spin" /> Imprimindo
-              </h3>
-              <span className="text-3xl font-bold">{activePrinters.length}</span>
-            </div>
-            <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
-              {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
+          
+          {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
 
               {activePrinters.map(p => (
                 <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
@@ -515,8 +519,34 @@ function App() {
                     {p.name || 'Impressora Sem Nome'}
                   </span>
                 </li>
-              ))}
+              ))} */}
 
+          <Card className="border-t-4 border-t-green-500">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
+                <FaCog className="animate-spin" /> Imprimindo
+              </h3>
+              <span className="text-3xl font-bold">{activePrinters.length}</span>
+            </div>
+            <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
+              {activePrinters.map(p => (
+                <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
+                  <div className="flex flex-col truncate pr-2">
+                    <span className="font-bold text-white truncate">{p.name}</span>
+                    <span className="text-xs text-farm-medium-blue truncate flex items-center gap-1">
+                      <FaFileCode size={10} /> {p.jobName}
+                    </span>
+                  </div>
+                  
+                  <button 
+                    onClick={() => setSelectedPrinterForMonitor(p)}
+                    className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                    title="Monitorar Câmera e Controles"
+                  >
+                    <FaEye />
+                  </button>
+                </li>
+              ))}
             </ul>
           </Card>
 
@@ -538,14 +568,27 @@ function App() {
                     {p.name || 'Sem Nome'}
                   </span>
                   
-                  {/* BOTÃO DE IMPRIMIR */}
-                  <button 
-                    onClick={() => handleOpenPrintModal(p)}
-                    className="ml-2 bg-farm-medium-blue text-white p-1.5 rounded hover:bg-blue-600 transition-colors"
-                    title="Imprimir nesta impressora"
-                  >
-                    <FaPlay size={10} />
-                  </button>
+                  <div className="flex items-center gap-2 ml-2">
+
+                    {/* BOTÃO DE IMPRIMIR */}
+                    <button 
+                      onClick={() => handleOpenPrintModal(p)}
+                      className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                      title="Imprimir nesta impressora"
+                    >
+                      <FaPlay size={10} />
+                    </button>
+
+                    <button 
+                      onClick={() => setSelectedPrinterForMonitor(p)}
+                      className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                      title="Monitorar Câmera e Controles"
+                    >
+                      <FaEye />
+                    </button>
+
+                  </div>
+
                 </li>
               ))}
             </ul>

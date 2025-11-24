@@ -13,7 +13,7 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # tabela de impressoras registradas
+    # 1. Cria a tabela se não existir (para instalações novas)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS printers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,9 +21,19 @@ def init_db():
         ip TEXT,
         token TEXT UNIQUE,
         last_seen TIMESTAMP,
-        last_status TEXT
+        last_status TEXT,
+        webcam_url TEXT  -- Adicionado aqui para novos bancos
     )
     """)
+
+    # 2. Atualiza tabelas antigas (Migration Automática)
+    # Tenta adicionar a coluna 'webcam_url' em bancos que já existem
+    try:
+        cur.execute("ALTER TABLE printers ADD COLUMN webcam_url TEXT")
+        print("MIGRATION: Coluna 'webcam_url' adicionada com sucesso!")
+    except sqlite3.OperationalError:
+        # Se der erro, é porque a coluna já existe. Ignoramos.
+        pass
 
     # fila de impressão
     cur.execute("""
@@ -31,8 +41,18 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
         filepath TEXT NOT NULL,
-        target_token TEXT, -- se null, pode ser processado por qualquer impressora autorizada
-        status TEXT NOT NULL DEFAULT 'queued', -- queued, sent, printing, done, error
+        target_token TEXT,
+        status TEXT NOT NULL DEFAULT 'queued',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Tabela de Comandos de Controle
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS commands (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        target_token TEXT NOT NULL,
+        command TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
