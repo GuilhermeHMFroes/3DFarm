@@ -1,13 +1,14 @@
 import os
 from pathlib import Path
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 import db
 from utils import generate_token
 import json
 import sqlite3
 
-from flask import Response, stream_with_context
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
 
 import requests
 
@@ -21,6 +22,9 @@ FRONTEND_BUILD = BASE_DIR / ".." / "frontend" / "build"
 
 # Flask app: aponta para o build do React
 app = Flask(__name__, static_folder=str(FRONTEND_BUILD), static_url_path="/")
+# Configuração do SocketIO (permite tamanhos de payload maiores para vídeo)
+# max_http_buffer_size define o limite de tamanho do frame (5MB aqui)
+socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=5 * 1024 * 1024)
 CORS(app)
 
 # Inicializa DB
@@ -346,7 +350,7 @@ def api_delete_printer(printer_id):
 
 # Fazendo proxy com o octprint através do servidor
 
-# 1. ROTA DE COMANDOS (Frontend -> Servidor)
+"""# 1. ROTA DE COMANDOS (Frontend -> Servidor)
 @app.route("/api/printer/command", methods=["POST"])
 def api_send_command():
     data = request.get_json() or {}
@@ -362,7 +366,7 @@ def api_send_command():
     conn.commit()
     conn.close()
     
-    return jsonify({"success": True, "message": f"Comando {cmd} enviado."})
+    return jsonify({"success": True, "message": f"Comando {cmd} enviado."})"""
 
 # 2. ROTA PARA O PLUGIN BUSCAR COMANDOS (Plugin -> Servidor)
 @app.route("/api/printer/check_commands")
@@ -456,5 +460,79 @@ def serve_react(path):
         return send_from_directory(str(FRONTEND_BUILD), "index.html")
     return jsonify({"message": "API da Fazenda 3D - React não buildado."})
 
+# --- ROTAS DE WEBSOCKET (O Túnel Reverso) ---
+
+# 1. IMPRESSORA SE CONECTA
+@socketio.on('printer_connect')
+def handle_printer_connect(data):
+    token = data.get('token')
+    if token:
+        # A impressora entra numa sala exclusiva com o nome do token
+        join_room(token)
+        print(f"WS: Impressora conectada na sala: {token}")
+        emit('server_ack', {'status': 'connected'}, to=token)
+
+# 2. SITE (REACT) QUER ASSISTIR
+@socketio.on('join_stream')
+def handle_join_stream(data):
+    token = data.get('token')
+    if token:
+        # O Frontend entra na sala "stream_TOKEN"
+        room_name = f"stream_{token}"
+        join_room(room_name)
+        
+        # Avisa a impressora para começar a mandar vídeo (Economia de banda)
+        # Envia apenas para a sala da impressora específica
+        emit('start_video', {'fps': 10}, to=token)
+        print(f"WS: Cliente assistindo {token}")
+
+# 3. SITE (REACT) PAROU DE ASSISTIR
+@socketio.on('leave_stream')
+def handle_leave_stream(data):
+    token = data.get('token')
+    if token:
+        room_name = f"stream_{token}"
+        leave_room(room_name)
+        # Avisa a impressora para parar (Economia de banda)
+        emit('stop_video', {}, to=token)
+
+# 4. TUNEL DE VÍDEO (Impressora -> Servidor -> Site)
+@socketio.on('video_frame')
+def handle_video_frame(data):
+    token = data.get('token')
+    image_data = data.get('image') # Bytes da imagem
+    
+    if token and image_data:
+        # Repassa imediatamente para quem está na sala de stream
+        # broadcast=False garante que vai só para a sala
+        room_name = f"stream_{token}"
+        emit('render_frame', {'image': image_data}, to=room_name)
+
+# 5. COMANDOS EM TEMPO REAL (Site -> Servidor -> Impressora)
+@app.route("/api/printer/command", methods=["POST"])
+def api_send_command():
+    # Mantemos a rota HTTP para o React usar, mas o envio vira Socket
+    data = request.get_json() or {}
+    token = data.get("token")
+    cmd = data.get("command")
+    
+    if not token or not cmd:
+        return jsonify({"success": False, "message": "Dados inválidos"}), 400
+
+    # Grava no banco como backup
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO commands (target_token, command) VALUES (?,?)", (token, cmd))
+    conn.commit()
+    conn.close()
+
+    # TENTA ENVIAR VIA SOCKET (Instantâneo)
+    print(f"WS: Enviando comando '{cmd}' para {token}")
+    socketio.emit('execute_command', {'cmd': cmd}, to=token)
+    
+    return jsonify({"success": True, "message": f"Comando {cmd} enviado via túnel."})
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    #app.run(host="0.0.0.0", port=5000, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)
+
