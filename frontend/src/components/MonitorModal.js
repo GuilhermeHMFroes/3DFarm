@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Importa o cliente socket
-import { FaTimes, FaPause, FaPlay, FaStop, FaThermometerHalf, FaTerminal, FaArrowRight, FaFire, FaVideoSlash } from 'react-icons/fa';
+
+import { FaTimes, FaPause, FaPlay, FaStop, FaThermometerHalf, FaTerminal, FaArrowRight, 
+  FaFire, FaVideoSlash, FaArrowsAlt, FaCaretUp, FaCaretDown, FaCaretLeft, FaCaretRight, 
+  FaHome } from 'react-icons/fa';
 
 const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
   const [printer, setPrinter] = useState(initialPrinterData);
@@ -17,6 +20,9 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
   // Refs para gerenciar o socket e URLs de objeto sem causar re-renders
   const socketRef = useRef(null);
   const lastUrlRef = useRef(null);
+
+  const [moveStep, setMoveStep] = useState(10); // Passo de movimentação (1, 10, 100mm)
+  const terminalEndRef = useRef(null); // Referência para o scroll do terminal
 
   // URL do Backend (ajusta automaticamente se for localhost ou nuvem)
   // Se estiver rodando local, window.location.origin pode ser localhost:3000, 
@@ -94,6 +100,11 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
     const interval = setInterval(fetchStatus, 2000);
     return () => clearInterval(interval);
   }, [initialPrinterData.token]);
+
+  //Scroll do terminal
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [cmdLog]);
 
   // --- 3. ENVIO DE COMANDOS (Via HTTP para o Backend converter em Socket) ---
   const sendCommand = (cmd, desc) => {
@@ -220,70 +231,66 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
               </div>
             </div>
 
-            {/* Terminal de comando com Altura Fixa e Scroll */}
-            <div className="h-48 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden">
-              
-              <div className="bg-farm-medium-grey/10 p-2 text-[10px] font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2">
-                <FaTerminal /> TERMINAL G-CODE
+            {/* Terminal de Comandos com Altura Fixa com Scroll */}
+            <div className="flex-1 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden" style={{ minHeight: '160px', maxHeight: '160px' }}>
+              <div className="bg-farm-medium-grey/10 p-2 text-[10px] font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2 uppercase">
+                <FaTerminal /> Console G-Code
               </div>
-              
               <div className="flex-1 p-2 overflow-y-auto font-mono text-[10px] space-y-1">
-                {cmdLog.map((log, i) => (<div key={i} className="text-green-500/80 break-all">{log}</div>))}
-                
-                <div ref={terminalEndRef} /> 
+                {cmdLog.length === 0 && <p className="text-gray-600 italic">Aguardando comandos...</p>}
+                {cmdLog.map((log, i) => (<div key={i} className="text-green-500/80 border-b border-green-900/10 pb-1">{log}</div>))}
+                <div ref={terminalEndRef} />
               </div>
-             
               <form onSubmit={handleTerminalSubmit} className="flex border-t border-farm-medium-grey/30">
-                <input type="text" className="flex-1 bg-transparent text-white font-mono text-xs p-2 focus:outline-none uppercase" placeholder="Enviar comando..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
-                <button type="submit" className="px-4 text-farm-medium-grey hover:text-farm-orange"><FaArrowRight /></button>
+                <input type="text" className="flex-1 bg-transparent text-white font-mono text-xs p-2 focus:outline-none uppercase" placeholder="Comando..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
+                <button type="submit" className="px-4 text-farm-medium-grey hover:text-farm-orange transition-colors"><FaArrowRight /></button>
               </form>
-
             </div>
 
-          </div>
 
-
-            {/* CONTROLES DE MOVIMENTO (Estilo OctoPrint) */}
-            <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+              {/* Controles de Movimento Estilo OctoPrint */}
+            <div className="bg-white/5 p-3 rounded-lg border border-white/10 mt-2">
                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-xs font-bold text-farm-medium-grey flex items-center gap-2"><FaArrowsAlt /> MOVIMENTAÇÃO</h3>
+                  <span className="text-[10px] font-bold text-farm-medium-grey uppercase flex items-center gap-2"><FaArrowsAlt /> Movimentação</span>
                   <div className="flex gap-1">
-                    {[0.1, 1, 10, 100].map(step => (
-                      <button key={step} onClick={() => setMoveStep(step)} className={`text-[10px] px-2 py-0.5 rounded ${moveStep === step ? 'bg-farm-medium-blue text-white' : 'bg-white/10 text-farm-light-grey'}`}>{step}</button>
+                    {[1, 10, 100].map(step => (
+                      <button key={step} onClick={() => setMoveStep(step)} className={`text-[10px] px-2 py-0.5 rounded border ${moveStep === step ? 'bg-farm-medium-blue border-farm-medium-blue text-white' : 'border-white/10 text-farm-light-grey'}`}>{step}mm</button>
                     ))}
                   </div>
                </div>
                
-               <div className="flex gap-6 justify-center items-center">
-                  {/* XY Control */}
+               <div className="flex justify-around items-center gap-2">
+                  {/* Pad XY */}
                   <div className="grid grid-cols-3 gap-1">
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 Y${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretUp /></button>
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 X-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretLeft /></button>
-                    <button onClick={() => sendCommand('G28 X0 Y0')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40"><FaHome /></button>
-                    <button onClick={() => sendCommand(`G91\nG1 X${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretRight /></button>
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 Y-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretDown /></button>
-                    <div></div>
+                    <div />
+                    <button onClick={() => sendCommand(`G91\nG1 Y${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretUp /></button>
+                    <div />
+                    <button onClick={() => sendCommand(`G91\nG1 X-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretLeft /></button>
+                    <button onClick={() => sendCommand('G28 X Y')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40"><FaHome /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 X${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretRight /></button>
+                    <div />
+                    <button onClick={() => sendCommand(`G91\nG1 Y-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretDown /></button>
+                    <div />
                   </div>
 
-                  {/* Z Control */}
-                  <div className="flex flex-col gap-1">
-                    <button onClick={() => sendCommand(`G91\nG1 Z${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretUp /></button>
-                    <button onClick={() => sendCommand('G28 Z0')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40 text-xs font-bold">Z</button>
-                    <button onClick={() => sendCommand(`G91\nG1 Z-${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretDown /></button>
+                  {/* Eixo Z */}
+                  <div className="flex flex-col gap-1 items-center border-l border-white/10 pl-4">
+                    <button onClick={() => sendCommand(`G91\nG1 Z${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretUp /></button>
+                    <button onClick={() => sendCommand('G28 Z')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded text-[10px] font-bold uppercase">Z</button>
+                    <button onClick={() => sendCommand(`G91\nG1 Z-${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretDown /></button>
                   </div>
 
-                  {/* E Control (Extrusora) */}
-                  <div className="flex flex-col gap-1 ml-4 border-l border-white/10 pl-6">
-                    <button onClick={() => sendCommand(`G91\nG1 E${moveStep} F300\nG90`)} className="px-3 py-1 bg-orange-500/20 text-orange-500 border border-orange-500/50 rounded text-[10px] font-bold hover:bg-orange-500/30">EXTRUSAR</button>
-                    <button onClick={() => sendCommand(`G91\nG1 E-${moveStep} F300\nG90`)} className="px-3 py-1 bg-white/10 text-white rounded text-[10px] font-bold hover:bg-white/20">RETRAIR</button>
+                  {/* Extrusora */}
+                  <div className="flex flex-col gap-2 pl-4 border-l border-white/10">
+                    <button onClick={() => sendCommand(`G91\nG1 E${moveStep} F300\nG90`)} className="px-2 py-1 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded text-[9px] font-bold hover:bg-orange-500/20 uppercase">Extrusar</button>
+                    <button onClick={() => sendCommand(`G91\nG1 E-${moveStep} F300\nG90`)} className="px-2 py-1 bg-white/5 text-white rounded text-[9px] font-bold hover:bg-white/20 uppercase">Retrair</button>
                   </div>
-                  
-              </div>
-
+               </div>
             </div>
+
+            
+
+          </div>
 
 
           
