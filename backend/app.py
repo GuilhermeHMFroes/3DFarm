@@ -478,15 +478,15 @@ def handle_printer_connect(data):
 def on_join(data):
     token = data.get('token')
     if token:
-        # 1. O usuário entra na sala de VÍDEO específica
+        # O React entra na sala de vídeo
         room_name = f"stream_{token}"
-        join_room(room_name) 
+        join_room(room_name)
         
-        # 2. Avisamos a IMPRESSORA para começar. 
-        # Como a impressora se registrou com o 'token' puro no connect, enviamos para 'token'
-        emit('start_video', {}, to=token) 
+        # IMPORTANTE: Envia o comando para a impressora (que está na sala 'token')
+        # Adicione o namespace='/' explicitamente se necessário
+        emit('start_video', {'data': 'iniciar'}, to=token) 
         
-        print(f"Usuário entrou na sala {room_name} para assistir a impressora.")
+        print(f"DEBUG: Utilizador pediu vídeo. Sala: {room_name}. Avisando impressora: {token}")
 
 # 3. SITE (REACT) PAROU DE ASSISTIR
 @socketio.on('leave_stream')

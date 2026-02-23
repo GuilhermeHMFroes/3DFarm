@@ -40,7 +40,10 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
       // AJUSTE AQUI: O servidor Flask espera o token para registrar a sala
       // O join_room no Flask usará o token ou f"stream_{token}" 
       // conforme sua lógica de 'handle_video_frame'
-      socket.emit('join_stream', { token: printer.token });
+      if(printer.token) {
+        socket.emit('join_stream', { token: printer.token });
+      }
+
     });
 
     socket.on('render_frame', (data) => {
