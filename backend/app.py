@@ -25,6 +25,7 @@ app = Flask(__name__, static_folder=str(FRONTEND_BUILD), static_url_path="/")
 # Configuração do SocketIO (permite tamanhos de payload maiores para vídeo)
 # max_http_buffer_size define o limite de tamanho do frame (5MB aqui)
 socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=5 * 1024 * 1024)
+#socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app)
 
 # Inicializa DB
@@ -497,16 +498,24 @@ def handle_leave_stream(data):
         emit('stop_video', {}, to=token)
 
 # 4. TUNEL DE VÍDEO (Impressora -> Servidor -> Site)
+# No app.py da Fazenda
+
+@socketio.on('join_stream')
+def on_join(data):
+    token = data.get('token')
+    if token:
+        join_room(token) # O modal do React usa o token como nome da sala
+        print(f"Usuário entrou na stream da impressora: {token}")
+
 @socketio.on('video_frame')
 def handle_video_frame(data):
     token = data.get('token')
-    image_data = data.get('image') # Bytes da imagem
+    image_data = data.get('image') # O OctoPrint manda o JPG binário aqui
     
     if token and image_data:
-        # Repassa imediatamente para quem está na sala de stream
-        # broadcast=False garante que vai só para a sala
-        room_name = f"stream_{token}"
-        emit('render_frame', {'image': image_data}, to=room_name)
+        # Repassamos para a sala 'token'
+        # Usamos o evento 'render_frame' que o seu MonitorModal.js está ouvindo
+        emit('render_frame', {'image': image_data}, to=token)
 
 # 5. COMANDOS EM TEMPO REAL (Site -> Servidor -> Impressora)
 @app.route("/api/printer/command", methods=["POST"])
