@@ -27,33 +27,37 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
 
   // --- 1. LÓGICA DO WEBSOCKET (VÍDEO) ---
   useEffect(() => {
-    // Conecta ao Socket.io
     const socket = io(SERVER_URL, {
-      transports: ['websocket'], // Força websocket para ser mais rápido
+      transports: ['websocket'],
+      upgrade: false // Mantém estável no websocket
     });
     socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log("Frontend conectado ao Socket!");
       setIsConnected(true);
-      // Pede para entrar na sala de stream desta impressora
+      
+      // AJUSTE AQUI: O servidor Flask espera o token para registrar a sala
+      // O join_room no Flask usará o token ou f"stream_{token}" 
+      // conforme sua lógica de 'handle_video_frame'
       socket.emit('join_stream', { token: printer.token });
     });
 
-    // Ouve os quadros de vídeo chegando
     socket.on('render_frame', (data) => {
       try {
-        // Se data.image já for um Blob ou ArrayBuffer
+        // Recebe os bytes do servidor e converte em URL de imagem
         const blob = new Blob([data.image], { type: 'image/jpeg' });
         const url = URL.createObjectURL(blob);
         
+        // Substituição eficiente da imagem
+        setImageSrc(url);
+
+        // Limpeza da URL antiga para não vazar memória RAM do navegador
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current);
         }
         lastUrlRef.current = url;
-        setImageSrc(url);
         
-        // Se o status estava "Conectando...", agora temos certeza que há vídeo
         if(!isConnected) setIsConnected(true); 
         
       } catch (err) {
@@ -63,11 +67,12 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
+      setImageSrc(null); // Limpa a tela se desconectar
     });
 
-    // Limpeza ao fechar o modal
     return () => {
       if (socket) {
+        // Importante para o servidor saber que pode mandar o 'stop_video' para a impressora
         socket.emit('leave_stream', { token: printer.token });
         socket.disconnect();
       }

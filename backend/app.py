@@ -478,8 +478,15 @@ def handle_printer_connect(data):
 def on_join(data):
     token = data.get('token')
     if token:
-        join_room(token) # O modal do React usa o token como nome da sala
-        print(f"Usuário entrou na stream da impressora: {token}")
+        # 1. O usuário entra na sala de VÍDEO específica
+        room_name = f"stream_{token}"
+        join_room(room_name) 
+        
+        # 2. Avisamos a IMPRESSORA para começar. 
+        # Como a impressora se registrou com o 'token' puro no connect, enviamos para 'token'
+        emit('start_video', {}, to=token) 
+        
+        print(f"Usuário entrou na sala {room_name} para assistir a impressora.")
 
 # 3. SITE (REACT) PAROU DE ASSISTIR
 @socketio.on('leave_stream')
@@ -496,12 +503,11 @@ def handle_leave_stream(data):
 @socketio.on('video_frame')
 def handle_video_frame(data):
     token = data.get('token')
-    image_data = data.get('image') # O OctoPrint manda o JPG binário aqui
+    image_data = data.get('image')
     
     if token and image_data:
-        # Repassamos para a sala 'token'
-        # Usamos o evento 'render_frame' que o seu MonitorModal.js está ouvindo
-        emit('render_frame', {'image': image_data}, to=token)
+        # Envia apenas para quem está na sala de stream
+        emit('render_frame', {'image': image_data}, to=f"stream_{token}")
 
 # 5. COMANDOS EM TEMPO REAL (Site -> Servidor -> Impressora)
 @app.route("/api/printer/command", methods=["POST"])
