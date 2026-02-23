@@ -9,8 +9,10 @@ import sqlite3
 
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
-
 import requests
+
+import eventlet
+eventlet.monkey_patch()
 
 # Caminhos
 BASE_DIR = Path(__file__).resolve().parent
@@ -24,8 +26,12 @@ FRONTEND_BUILD = BASE_DIR / ".." / "frontend" / "build"
 app = Flask(__name__, static_folder=str(FRONTEND_BUILD), static_url_path="/")
 # Configuração do SocketIO (permite tamanhos de payload maiores para vídeo)
 # max_http_buffer_size define o limite de tamanho do frame (5MB aqui)
-socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=5 * 1024 * 1024)
-#socketio = SocketIO(app, cors_allowed_origins="*")
+
+socketio = SocketIO(app,
+                    cors_allowed_origins="*",
+                    async_mode='eventlet',
+                    max_http_buffer_size=5 * 1280 * 720)
+
 CORS(app)
 
 # Inicializa DB
