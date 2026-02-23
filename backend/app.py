@@ -475,17 +475,11 @@ def handle_printer_connect(data):
 
 # 2. SITE (REACT) QUER ASSISTIR
 @socketio.on('join_stream')
-def handle_join_stream(data):
+def on_join(data):
     token = data.get('token')
     if token:
-        # O Frontend entra na sala "stream_TOKEN"
-        room_name = f"stream_{token}"
-        join_room(room_name)
-        
-        # Avisa a impressora para começar a mandar vídeo (Economia de banda)
-        # Envia apenas para a sala da impressora específica
-        emit('start_video', {'fps': 10}, to=token)
-        print(f"WS: Cliente assistindo {token}")
+        join_room(token) # O modal do React usa o token como nome da sala
+        print(f"Usuário entrou na stream da impressora: {token}")
 
 # 3. SITE (REACT) PAROU DE ASSISTIR
 @socketio.on('leave_stream')
@@ -498,14 +492,6 @@ def handle_leave_stream(data):
         emit('stop_video', {}, to=token)
 
 # 4. TUNEL DE VÍDEO (Impressora -> Servidor -> Site)
-# No app.py da Fazenda
-
-@socketio.on('join_stream')
-def on_join(data):
-    token = data.get('token')
-    if token:
-        join_room(token) # O modal do React usa o token como nome da sala
-        print(f"Usuário entrou na stream da impressora: {token}")
 
 @socketio.on('video_frame')
 def handle_video_frame(data):
