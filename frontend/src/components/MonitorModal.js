@@ -235,7 +235,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
             
 
             {/* Terminal de Comandos com Altura Fixa com Scroll */}
-            <div className="flex-1 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden" style={{ minHeight: '350px', maxHeight: '350px' }}>
+            <div className="flex-1 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden" style={{ minHeight: '370px', maxHeight: '370px' }}>
               <div className="bg-farm-medium-grey/10 p-2 text-[10px] font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2 uppercase">
                 <FaTerminal /> Console G-Code
               </div>
