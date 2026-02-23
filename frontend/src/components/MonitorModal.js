@@ -115,7 +115,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
     })
     .then(() => {
       const time = new Date().toLocaleTimeString();
-      setCmdLog(prev => [`[${time}] > ${cmd}`, ...prev]);
+      setCmdLog(prev => [...prev, `[${time}] > ${cmd}`]); // Isso joga no final
     })
     .catch(err => alert("Erro ao enviar comando."));
   };
@@ -191,10 +191,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                   <FaStop /> <span className="text-xs font-bold">CANCELAR</span>
                 </button>
               </div>
-          </div>
 
-          {/* COLUNA DIREITA: Controles e Terminal (Mantido igual) */}
-          <div className="lg:w-1/2 flex flex-col gap-4">
             {/* Painel de Temperatura */}
             <div className="bg-white/5 p-4 rounded-lg border border-white/10">
               <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
@@ -231,15 +228,23 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
               </div>
             </div>
 
+          </div>
+
+          {/* COLUNA DIREITA: Controles e Terminal (Mantido igual) */}
+          <div className="lg:w-1/2 flex flex-col gap-4">
+            
+
             {/* Terminal de Comandos com Altura Fixa com Scroll */}
             <div className="flex-1 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden" style={{ minHeight: '160px', maxHeight: '160px' }}>
               <div className="bg-farm-medium-grey/10 p-2 text-[10px] font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2 uppercase">
                 <FaTerminal /> Console G-Code
               </div>
               <div className="flex-1 p-2 overflow-y-auto font-mono text-[10px] space-y-1">
-                {cmdLog.length === 0 && <p className="text-gray-600 italic">Aguardando comandos...</p>}
-                {cmdLog.map((log, i) => (<div key={i} className="text-green-500/80 border-b border-green-900/10 pb-1">{log}</div>))}
-                <div ref={terminalEndRef} />
+                {cmdLog.map((log, i) => (
+                  <div key={i} className="text-green-500/80 border-b border-green-900/10 pb-1">{log}</div>
+                ))}
+                {/* A âncora DEVE estar aqui, depois do map */}
+                <div ref={terminalEndRef} /> 
               </div>
               <form onSubmit={handleTerminalSubmit} className="flex border-t border-farm-medium-grey/30">
                 <input type="text" className="flex-1 bg-transparent text-white font-mono text-xs p-2 focus:outline-none uppercase" placeholder="Comando..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
@@ -288,7 +293,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                </div>
             </div>
 
-            
+
 
           </div>
 
