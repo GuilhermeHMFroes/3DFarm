@@ -189,7 +189,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
               </div>
           </div>
 
-          {/* COLUNA DIREITA: Controles e Terminal*/}
+          {/* COLUNA DIREITA: Controles e Terminal (Mantido igual) */}
           <div className="lg:w-1/2 flex flex-col gap-4">
             {/* Painel de Temperatura */}
             <div className="bg-white/5 p-4 rounded-lg border border-white/10">
@@ -227,70 +227,21 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
               </div>
             </div>
 
-            {/* Terminal de comandocom Altura Fixa e Scroll */}
-            <div className="h-48 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden">
-              
-              <div className="bg-farm-medium-grey/10 p-2 text-[10px] font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2">
-                <FaTerminal /> TERMINAL G-CODE
+            {/* Terminal de Comandos */}
+            <div className="flex-1 flex flex-col bg-black rounded-lg border border-farm-medium-grey/50 overflow-hidden">
+              <div className="bg-farm-medium-grey/10 p-2 text-xs font-bold text-farm-medium-grey border-b border-farm-medium-grey/20 flex items-center gap-2">
+                <FaTerminal /> Terminal de Envio (G-Code)
               </div>
-              
-              <div className="flex-1 p-2 overflow-y-auto font-mono text-[10px] space-y-1">
-                {cmdLog.map((log, i) => (<div key={i} className="text-green-500/80 break-all">{log}</div>))}
-                
-                <div ref={terminalEndRef} /> 
+              <div className="flex-1 p-2 overflow-y-auto font-mono text-xs space-y-1 h-32">
+                {cmdLog.length === 0 && <p className="text-gray-600 italic">Histórico vazio...</p>}
+                {cmdLog.map((log, i) => (<div key={i} className="text-green-500 border-b border-green-900/30 pb-1">{log}</div>))}
               </div>
-             
               <form onSubmit={handleTerminalSubmit} className="flex border-t border-farm-medium-grey/30">
-                <input type="text" className="flex-1 bg-transparent text-white font-mono text-xs p-2 focus:outline-none uppercase" placeholder="Enviar comando..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
-                <button type="submit" className="px-4 text-farm-medium-grey hover:text-farm-orange"><FaArrowRight /></button>
+                <input type="text" className="flex-1 bg-transparent text-white font-mono text-sm p-3 focus:outline-none" placeholder="Ex: G28, M106 S255..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
+                <button type="submit" className="bg-farm-medium-grey/20 text-farm-light-grey px-4 hover:bg-farm-orange hover:text-farm-dark-blue transition-colors"><FaArrowRight /></button>
               </form>
-
             </div>
-
           </div>
-
-          {/* CONTROLES DE MOVIMENTO (Estilo OctoPrint) */}
-            <div className="bg-white/5 p-4 rounded-lg border border-white/10">
-               <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-xs font-bold text-farm-medium-grey flex items-center gap-2"><FaArrowsAlt /> MOVIMENTAÇÃO</h3>
-                  <div className="flex gap-1">
-                    {[0.1, 1, 10, 100].map(step => (
-                      <button key={step} onClick={() => setMoveStep(step)} className={`text-[10px] px-2 py-0.5 rounded ${moveStep === step ? 'bg-farm-medium-blue text-white' : 'bg-white/10 text-farm-light-grey'}`}>{step}</button>
-                    ))}
-                  </div>
-               </div>
-               
-               <div className="flex gap-6 justify-center items-center">
-                  {/* XY Control */}
-                  <div className="grid grid-cols-3 gap-1">
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 Y${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretUp /></button>
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 X-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretLeft /></button>
-                    <button onClick={() => sendCommand('G28 X0 Y0')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40"><FaHome /></button>
-                    <button onClick={() => sendCommand(`G91\nG1 X${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretRight /></button>
-                    <div></div>
-                    <button onClick={() => sendCommand(`G91\nG1 Y-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretDown /></button>
-                    <div></div>
-                  </div>
-
-                  {/* Z Control */}
-                  <div className="flex flex-col gap-1">
-                    <button onClick={() => sendCommand(`G91\nG1 Z${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretUp /></button>
-                    <button onClick={() => sendCommand('G28 Z0')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40 text-xs font-bold">Z</button>
-                    <button onClick={() => sendCommand(`G91\nG1 Z-${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20"><FaCaretDown /></button>
-                  </div>
-
-                  {/* E Control (Extrusora) */}
-                  <div className="flex flex-col gap-1 ml-4 border-l border-white/10 pl-6">
-                    <button onClick={() => sendCommand(`G91\nG1 E${moveStep} F300\nG90`)} className="px-3 py-1 bg-orange-500/20 text-orange-500 border border-orange-500/50 rounded text-[10px] font-bold hover:bg-orange-500/30">EXTRUSAR</button>
-                    <button onClick={() => sendCommand(`G91\nG1 E-${moveStep} F300\nG90`)} className="px-3 py-1 bg-white/10 text-white rounded text-[10px] font-bold hover:bg-white/20">RETRAIR</button>
-                  </div>
-                  
-              </div>
-
-            </div>
-
         </div>
       </div>
     </div>
