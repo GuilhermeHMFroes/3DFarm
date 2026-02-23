@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import os
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
@@ -11,8 +14,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 
 import requests
 
-import eventlet
-eventlet.monkey_patch()
+
 
 # Caminhos
 BASE_DIR = Path(__file__).resolve().parent

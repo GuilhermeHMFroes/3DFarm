@@ -83,7 +83,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
         URL.revokeObjectURL(lastUrlRef.current);
       }
     };
-  }, [printer.token, SERVER_URL]);
+  }, [printer.token, SERVER_URL, isConnected]);
 
 
   // --- 2. LÓGICA DE DADOS (TEMPERATURA) ---
