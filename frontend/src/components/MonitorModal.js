@@ -27,9 +27,10 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
 
   // --- 1. LÓGICA DO WEBSOCKET (VÍDEO) ---
   useEffect(() => {
+    // Criamos a instância do socket
     const socket = io(SERVER_URL, {
       transports: ['websocket'],
-      upgrade: false // Mantém estável no websocket
+      upgrade: false
     });
     socketRef.current = socket;
 
@@ -37,45 +38,36 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
       console.log("Frontend conectado ao Socket!");
       setIsConnected(true);
       
-      // AJUSTE AQUI: O servidor Flask espera o token para registrar a sala
-      // O join_room no Flask usará o token ou f"stream_{token}" 
-      // conforme sua lógica de 'handle_video_frame'
       if(printer.token) {
         socket.emit('join_stream', { token: printer.token });
       }
-
     });
 
     socket.on('render_frame', (data) => {
       try {
-        // Recebe os bytes do servidor e converte em URL de imagem
         const blob = new Blob([data.image], { type: 'image/jpeg' });
         const url = URL.createObjectURL(blob);
         
-        // Substituição eficiente da imagem
         setImageSrc(url);
 
-        // Limpeza da URL antiga para não vazar memória RAM do navegador
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current);
         }
         lastUrlRef.current = url;
-        
-        if(!isConnected) setIsConnected(true); 
-        
       } catch (err) {
         console.error("Erro ao processar frame:", err);
       }
     });
 
     socket.on('disconnect', () => {
+      console.log("Socket desconectado");
       setIsConnected(false);
-      setImageSrc(null); // Limpa a tela se desconectar
+      setImageSrc(null);
     });
 
+    // LIMPEZA: Só ocorre quando o modal fecha ou o token muda
     return () => {
       if (socket) {
-        // Importante para o servidor saber que pode mandar o 'stop_video' para a impressora
         socket.emit('leave_stream', { token: printer.token });
         socket.disconnect();
       }
@@ -83,7 +75,8 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
         URL.revokeObjectURL(lastUrlRef.current);
       }
     };
-  }, [printer.token, SERVER_URL, isConnected]);
+    // REMOVIDO 'isConnected' daqui para evitar o loop infinito!
+  }, [printer.token, SERVER_URL]);
 
 
   // --- 2. LÓGICA DE DADOS (TEMPERATURA) ---
