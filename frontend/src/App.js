@@ -8,8 +8,15 @@ import SelectFileModal from './components/SelectFileModal'; // <--- Importa o Mo
 
 import MonitorModal from './components/MonitorModal'; // <--- Importa o Modal para Monitorar a impressora
 
+import ChangePassModal from './components/ChangePassModal';
+import AdminUsersModal from './components/AdminUsersModal';
+
 // Ícones (Instale com: npm install react-icons)
-import { FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay, FaEye } from 'react-icons/fa';
+import { 
+  FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, 
+  FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay, FaEye,
+  FaUserCircle, FaKey, FaUsersCog, FaSignOutAlt 
+} from 'react-icons/fa';
 
 // Logo
 import logoIcon from './assets/icon-3dfarm.png'; 
@@ -32,6 +39,16 @@ const CardTitle = ({ icon, title }) => (
 
 
 function App() {
+
+  // --- Estados de Autenticação ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState({ username: '', role: '' });
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // --- Estados originais do seu sistema ---
+
   const [printers, setPrinters] = useState([]);
   const [queue, setQueue] = useState([]);
   const [files, setFiles] = useState([]);
@@ -44,6 +61,10 @@ function App() {
   const [showFileModal, setShowFileModal] = useState(false);
   const [selectedPrinterForPrint, setSelectedPrinterForPrint] = useState(null);
   const [selectedPrinterForMonitor, setSelectedPrinterForMonitor] = useState(null);
+
+  // Estados para os novos modais de usuário
+  const [showChangePassModal, setShowChangePassModal] = useState(false);
+  const [showAdminUsersModal, setShowAdminUsersModal] = useState(false);
 
   // --- LÓGICA DE DADOS ---
 
@@ -87,6 +108,33 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // 1. Verifica se precisa de Setup (primeiro admin)
+        const setupRes = await axios.get('/api/auth/check-setup');
+        if (setupRes.data.setup_required) {
+          setSetupRequired(true);
+        } else {
+          // 2. Se não precisa de setup, verifica se tem token no localStorage
+          const token = localStorage.getItem('token');
+          const savedUser = localStorage.getItem('user');
+          if (token && savedUser) {
+            setIsLoggedIn(true);
+            setUser(JSON.parse(savedUser));
+            // Configura o axios para enviar o token em todas as chamadas futuras
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          }
+        }
+      } catch (err) {
+        console.error("Erro na autenticação", err);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
     fetchPrinters();
     fetchFiles();
     fetchQueue();
@@ -99,6 +147,35 @@ function App() {
     return () => clearInterval(interval);
   }, [fetchPrinters, fetchFiles]);
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('/api/auth/login', loginForm);
+      if (res.data.success) {
+        const { token, role, username } = res.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({ username, role }));
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        setUser({ username, role });
+        setIsLoggedIn(true);
+        setSetupRequired(false); // Caso tenha sido o primeiro cadastro
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Erro ao entrar");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
+    setIsLoggedIn(false);
+    window.location.reload(); // Limpa todos os estados
+  };
+
+  
+
   // Função que o Modal vai chamar
   const handlePrinterAdded = (newPrinter) => {
     // Adiciona a nova impressora à lista local
@@ -106,6 +183,8 @@ function App() {
     // Fecha o modal
     setShowModal(false);
   };
+
+  
 
   // --- LÓGICA DE UPLOAD ---
 
@@ -255,6 +334,8 @@ function App() {
     setDisconnectedPrinters(disconnected);
   };
 
+  
+
   // Abre o modal e guarda qual impressora foi selecionada
   const handleOpenPrintModal = (printer) => {
     setSelectedPrinterForPrint(printer);
@@ -330,8 +411,65 @@ function App() {
     }
   };
 
+  if (authLoading) return <div className="h-screen bg-farm-dark-blue flex items-center justify-center text-white">Carregando...</div>;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-farm-dark-blue flex items-center justify-center p-4">
+
+        <div className="fixed inset-0 z-0 bg-farm-bg bg-cover bg-center bg-no-repeat">
+          {/* Overlay escuro para garantir legibilidade, similar ao dashboard */}
+          <div className="absolute inset-0 bg-black/50"></div>
+        </div>
+
+        <div className="backdrop-blur p-8 rounded-2xl border border-farm-medium-grey w-full max-w-md backdrop-blur-xl">
+
+          <img src={logoPrincipal} alt="3DFarm" className="w-48 mx-auto mb-8" />
+
+          <h2 className="text-white text-center text-xl font-bold mb-6">
+            {setupRequired ? "Configuração Inicial: Criar Admin" : "3D Farm - Login"}
+          </h2>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+
+            <input 
+              type="text" placeholder="Utilizador" required
+              className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white outline-none focus:border-farm-medium-blue transition-all"
+              onChange={e => setLoginForm({...loginForm, username: e.target.value})}
+            />
+
+            <input 
+              type="password" placeholder="Senha" required
+              className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white outline-none focus:border-farm-medium-blue transition-all"
+              onChange={e => setLoginForm({...loginForm, password: e.target.value})}
+            />
+
+            <button type="submit" className="w-full bg-farm-orange p-3 rounded-lg text-white font-bold hover:bg-opacity-80">
+              {setupRequired ? "CRIAR CONTA ADMIN" : "ENTRAR"}
+            </button>
+
+          </form>
+
+        </div>
+        
+      </div>
+    );
+  }
+
   return (
     <>
+      {/* Modal */}
+
+      {showChangePassModal && (
+        <ChangePassModal 
+          onClose={() => setShowChangePassModal(false)} />
+      )}
+      
+      {showAdminUsersModal && (
+        <AdminUsersModal 
+        onClose={() => setShowAdminUsersModal(false)} />
+      )}
+
       {/* O Modal (agora controlado pelo state 'showModal') */}
       {showModal && (
         <AddPrinterModal
@@ -361,10 +499,7 @@ function App() {
         
         {/* Cabeçalho */}
         <header className="
-          flex flex-col md:flex-row justify-between items-center md:gap-0 gap-5 
-          mb-8 p-6 
-          bg-black/20 border border-farm-medium-grey/50 
-          rounded-xl backdrop-blur-lg">
+          flex flex-col md:flex-row justify-between items-center md:gap-0 gap-5 mb-8 p-6 bg-black/20 border border-farm-medium-grey/50 rounded-xl backdrop-blur-lg relative z-[1000]">
           
           <div className="flex items-center gap-4">
             <img src={logoPrincipal} alt="3D Farm Logo" className="h-10" />
@@ -373,12 +508,44 @@ function App() {
             </h1>
           </div>
           
-          <button 
-            className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
-            onClick={() => setShowModal(true)} // Abre o modal
-          >
-            <FaPlus /> Adicionar Impressora
-          </button>
+
+          <div className="flex items-center gap-4 relative z-[1000]">
+
+            {/* BOTÃO DE ADICIONARIMPRESSORA */}
+            <button 
+              className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              onClick={() => setShowModal(true)} // Abre o modal de adicionar impressora
+            >
+              <FaPlus /> Adicionar Impressora
+            </button>
+
+            {/* BOTÃO DE PERFIL */}
+            <div className="relative group z-[100]">
+              <button className="p-3 bg-farm-medium-grey/20 text-white rounded-full border border-white/10 hover:bg-farm-medium-grey/40 transition-all">
+                <FaUserCircle size={20} />
+              </button>
+              
+              {/* Menu Dropdown */}
+              <div className="absolute right-0 pt-2 w-52 bg-farm-dark-blue border border-farm-medium-grey rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] hidden group-hover:block z-[1100] overflow-hidden">
+                <div className="p-3 border-b border-white/10 text-xs text-farm-light-grey">
+                  Olá, <b>{user.username}</b> ({user.role})
+                </div>
+                <button onClick={() => setShowChangePassModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                  <FaKey /> Mudar Senha
+                </button>
+                {user.role === 'admin' && (
+                  <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                    <FaUsersCog /> Gerir Utilizadores
+                  </button>
+                )}
+                <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                  <FaSignOutAlt /> Sair
+                </button>
+              </div>
+            </div>
+
+          </div>
+
         </header>
 
         {/* --- TELA PRINCIPAL (GRID COM 3 COLUNAS) --- */}

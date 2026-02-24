@@ -14,7 +14,8 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 
 import requests
 
-
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 # Caminhos
 BASE_DIR = Path(__file__).resolve().parent
@@ -33,6 +34,10 @@ socketio = SocketIO(app,
                     cors_allowed_origins="*",
                     async_mode='eventlet',
                     max_http_buffer_size=5 * 1280 * 720)
+
+bcrypt = Bcrypt(app)
+app.config["JWT_SECRET_KEY"] = "l~fdE;,iQcD8xAx-<95JI8c#7Em)1O" # chave secreta para JWT (mude para produção!)
+jwt = JWTManager(app)
 
 CORS(app)
 
@@ -468,6 +473,138 @@ def serve_react(path):
     if index_path.exists():
         return send_from_directory(str(FRONTEND_BUILD), "index.html")
     return jsonify({"message": "API da Fazenda 3D - React não buildado."})
+
+
+# --- Parte dos usuários ---
+
+# --- ROTAS DE AUTENTICAÇÃO E USUÁRIOS ---
+
+@app.route("/api/auth/check-setup", methods=["GET"])
+def check_setup():
+    conn = db.get_conn()
+    cur = conn.cursor()
+    admin = cur.execute("SELECT id FROM users WHERE role = 'admin'").fetchone()
+    conn.close()
+    # Se não houver admin, retorna true para o frontend mostrar tela de cadastro inicial
+    return jsonify({"setup_required": admin is None})
+
+@app.route("/api/auth/login", methods=["POST"])
+def login():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+
+    conn = db.get_conn()
+    cur = conn.cursor()
+    
+    # Verifica se o banco está vazio para o primeiro Admin
+    count = cur.execute("SELECT COUNT(*) as total FROM users").fetchone()
+    if count['total'] == 0:
+        hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+        cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, 'admin')", (username, hashed_pw))
+        conn.commit()
+        user = cur.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    else:
+        user = cur.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+
+    conn.close()
+
+    if user and bcrypt.check_password_hash(user['password'], password):
+        # O identity do Token agora carrega ID e ROLE do usuário
+        token = create_access_token(identity=json.dumps({"id": user['id'], "role": user['role']}))
+        return jsonify({
+            "success": True, 
+            "token": token, 
+            "role": user['role'], 
+            "username": user['username']
+        })
+    
+    return jsonify({"success": False, "message": "Usuário ou senha incorretos"}), 401
+
+# Listar usuários (Apenas Admin)
+@app.route("/api/users", methods=["GET"])
+@jwt_required()
+def list_users():
+    current_user = json.loads(get_jwt_identity())
+    if current_user['role'] != 'admin':
+        return jsonify({"message": "Acesso negado"}), 403
+    
+    conn = db.get_conn()
+    cur = conn.cursor()
+    users = cur.execute("SELECT id, username, role FROM users").fetchall()
+    conn.close()
+    return jsonify([dict(u) for u in users])
+
+# Excluir usuário (Apenas Admin)
+@app.route("/api/users/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(user_id):
+    current_user = json.loads(get_jwt_identity())
+    if current_user['role'] != 'admin':
+        return jsonify({"message": "Acesso negado"}), 403
+    
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+# Mudar senha (Qualquer usuário logado)
+@app.route("/api/auth/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    current_user = json.loads(get_jwt_identity())
+    data = request.get_json()
+    
+    conn = db.get_conn()
+    cur = conn.cursor()
+    user = cur.execute("SELECT * FROM users WHERE id = ?", (current_user['id'],)).fetchone()
+    
+    if bcrypt.check_password_hash(user['password'], data['old_password']):
+        new_hashed = bcrypt.generate_password_hash(data['new_password']).decode('utf-8')
+        cur.execute("UPDATE users SET password = ? WHERE id = ?", (new_hashed, user['id']))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    
+    conn.close()
+    return jsonify({"success": False, "message": "Senha antiga incorreta"}), 400
+
+@app.route("/api/auth/register", methods=["POST"])
+@jwt_required()
+def register_user():
+    # 1. Verifica se quem está tentando criar é um administrador
+    current_user_data = json.loads(get_jwt_identity())
+    if current_user_data.get('role') != 'admin':
+        return jsonify({"message": "Acesso negado: Apenas administradores podem criar usuários"}), 403
+
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+    role = data.get("role", "user") # Padrão é 'user' se não enviado
+
+    if not username or not password:
+        return jsonify({"message": "Usuário e senha são obrigatórios"}), 400
+
+    # 2. Criptografa a senha antes de salvar
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    try:
+        conn = db.get_conn()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            (username, hashed_password, role)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True, "message": "Usuário criado com sucesso!"})
+    except sqlite3.IntegrityError:
+        return jsonify({"message": "Este nome de usuário já existe"}), 400
+    except Exception as e:
+        return jsonify({"message": f"Erro interno: {str(e)}"}), 500
+
 
 # --- ROTAS DE WEBSOCKET (O Túnel Reverso) ---
 
