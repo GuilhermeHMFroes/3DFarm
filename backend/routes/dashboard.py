@@ -7,6 +7,8 @@ import db
 import json
 import sqlite3
 
+from utils import generate_token
+
 # Inicializa DB
 db.init_db()
 

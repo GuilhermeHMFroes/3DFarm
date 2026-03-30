@@ -2,9 +2,24 @@ from flask import Blueprint, request, jsonify
 
 from extensions import socketio
 
+from utils import generate_token
+import json
+import sqlite3
+
 import db
 
 api_bp = Blueprint('api', __name__)
+
+# --- FUNÇÃO AUXILIAR QUE ESTÁ FALTANDO ---
+def create_printer_entry(name, ip, token):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO printers (name, ip, token, last_status) VALUES (?, ?, ?, ?)",
+        (name, ip, token, "offline")
+    )
+    conn.commit()
+    conn.close()
 
 @api_bp.route("/generate_token", methods=["POST"])
 def api_generate_token():
