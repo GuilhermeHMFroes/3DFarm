@@ -22,7 +22,9 @@ def row_to_dict(row):
     return {k: row[k] for k in row.keys()} if row else None
 
 dashboard_bp = Blueprint('dashboard', __name__)
-UPLOAD_FOLDER = Path(__file__).parent.parent / "uploads"
+UPLOAD_FOLDER = Path(__file__).parent.parent / "../uploads"
+
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
 @dashboard_bp.route("/files")
 @jwt_required()
