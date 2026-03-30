@@ -71,7 +71,7 @@ function App() {
   // useCallback "memoriza" a função para que ela não seja recriada
   const fetchPrinters = useCallback(() => {
     // Usando o endpoint do seu app.py
-    axios.get('/api/printers')
+    axios.get('/printers/lists')
       .then(response => {
         if (response.data.success) {
           setPrinters(response.data.printers);
@@ -87,7 +87,7 @@ function App() {
   }, []); // Array vazio = a função nunca muda
 
   const fetchQueue = useCallback(() => {
-    axios.get('/api/queue')
+    axios.get('/dashboard/queue')
       .then(response => {
         if (response.data.success) {
           setQueue(response.data.queue);
@@ -98,7 +98,7 @@ function App() {
 
   // Lista os arquivos G-code Carregados
   const fetchFiles = useCallback(() => {
-    axios.get('/api/files')
+    axios.get('/dashboard/files')
       .then(response => {
         if (response.data.success) {
           setFiles(response.data.files);
@@ -111,7 +111,7 @@ function App() {
     const checkAuth = async () => {
       try {
         // 1. Verifica se precisa de Setup (primeiro admin)
-        const setupRes = await axios.get('/api/auth/check-setup');
+        const setupRes = await axios.get('/auth/check-setup');
         if (setupRes.data.setup_required) {
           setSetupRequired(true);
         } else {
@@ -150,7 +150,7 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/auth/login', loginForm);
+      const res = await axios.post('/auth/login', loginForm);
       if (res.data.success) {
         const { token, role, username } = res.data;
         localStorage.setItem('token', token);
@@ -202,7 +202,7 @@ function App() {
     setUploadMessage('Enviando...');
 
     // 1. Envia o ficheiro para a pasta /uploads
-    axios.post('/upload', formData, {
+    axios.post('/dashboard/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then(response => {
@@ -210,7 +210,7 @@ function App() {
       setUploadMessage(`Sucesso: ${response.data.fileName} carregado!`);
       setSelectedFile(null); // Limpa o ficheiro do input
       
-      // IMPORTANTE: Removemos a chamada para /api/enqueue aqui.
+      // IMPORTANTE: Removemos a chamada para /dashboard/enqueue aqui.
       // Agora apenas atualizamos a lista visual de arquivos.
       fetchFiles(); 
     })
@@ -226,8 +226,8 @@ function App() {
       return; // Se o usuário clicar "Cancelar", a função para aqui
     }
 
-    // 2. Chama a nova API de DELETE
-    axios.delete(`/api/printer/delete/${printerId}`)
+    // 2. Chama a função de DELETE
+    axios.delete(`/printers/delete/<int:printer_id>${printerId}`)
       .then(response => {
         if (response.data.success) {
           // 3. Sucesso! Remove a impressora da lista na tela (sem recarregar)
@@ -346,8 +346,8 @@ function App() {
   const handleStartPrint = (filename) => {
     if (!selectedPrinterForPrint) return;
 
-    // Envia para a API /api/enqueue com o target_token da impressora específica
-    axios.post('/api/enqueue', {
+    // Envia para a API /dashboard/enqueue com o target_token da impressora específica
+    axios.post('/dashboard/enqueue', {
       fileName: filename,
       target_token: selectedPrinterForPrint.token // <--- O PULO DO GATO: Envia direto para esta impressora
     })
@@ -373,7 +373,7 @@ function App() {
       return;
     }
 
-    axios.delete(`/api/files/${filename}`)
+    axios.delete(`/dashboard/files/${filename}`)
       .then(response => {
         if (response.data.success) {
           fetchFiles(); // Atualiza a lista

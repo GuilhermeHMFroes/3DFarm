@@ -9,7 +9,7 @@ const ChangePassModal = ({ onClose }) => {
     if (form.new1 !== form.new2) return alert("As senhas novas não coincidem!");
     
     try {
-      await axios.post('/api/auth/change-password', { 
+      await axios.post('/auth/change-password', { 
         old_password: form.old, 
         new_password: form.new1 
       });

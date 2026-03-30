@@ -10,7 +10,7 @@ const AdminUsersModal = ({ onClose }) => {
   // Função para buscar a lista atualizada
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('/api/users');
+      const res = await axios.get('/auth/users');
       setUsers(res.data);
     } catch (err) {
       console.error("Erro ao buscar usuários");
@@ -24,7 +24,7 @@ const AdminUsersModal = ({ onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('/api/auth/register', newUser);
+      await axios.post('/auth/register', newUser);
       alert("Usuário cadastrado com sucesso!");
       setNewUser({ username: '', password: '', role: 'user' }); // Limpa o formulário
       fetchUsers(); // Atualiza a lista
@@ -38,7 +38,7 @@ const AdminUsersModal = ({ onClose }) => {
   const deleteUser = async (id, name) => {
     if (window.confirm(`Tem certeza que deseja remover ${name}?`)) {
       try {
-        await axios.delete(`/api/users/${id}`);
+        await axios.delete(`/auth/users/${id}`);
         fetchUsers();
       } catch (err) {
         alert("Erro ao remover usuário");

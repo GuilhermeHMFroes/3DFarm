@@ -1,4 +1,5 @@
-# db.py
+# Configuração e inicialização do banco de dados
+
 import sqlite3
 from pathlib import Path
 

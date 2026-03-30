@@ -88,7 +88,10 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
   // --- 2. LÓGICA DE DADOS (TEMPERATURA) ---
   useEffect(() => {
     const fetchStatus = () => {
-      axios.get('/api/printers')
+      //axios.get('/api/printers')
+
+      axios.get('/printers/list')
+
         .then(res => {
           if (res.data.success) {
             const updated = res.data.printers.find(p => p.token === initialPrinterData.token);

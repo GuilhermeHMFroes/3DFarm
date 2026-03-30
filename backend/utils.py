@@ -1,4 +1,5 @@
-# utils.py
+# Helpers genéricos
+
 import secrets
 
 def generate_token(nbytes=24):

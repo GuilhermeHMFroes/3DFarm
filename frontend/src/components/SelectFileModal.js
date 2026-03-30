@@ -10,7 +10,7 @@ const SelectFileModal = ({ onClose, onSelectFile, printerName }) => {
 
   // Busca a lista de arquivos disponíveis no backend
   useEffect(() => {
-    axios.get('/api/files')
+    axios.get('/dashboard/files')
       .then(res => {
         if (res.data.success) {
           setFiles(res.data.files);
