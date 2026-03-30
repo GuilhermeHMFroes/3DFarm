@@ -105,7 +105,7 @@ def auth_change_password():
     conn.close()
     return jsonify({"success": False, "message": "Senha antiga incorreta"}), 400
 
-@auth_bp.route("/auth/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"])
 @jwt_required()
 def auth_register_user():
     # 1. Verifica se quem está tentando criar é um administrador
