@@ -7,6 +7,9 @@ import db
 
 printers_bp = Blueprint('printers', __name__)
 
+def row_to_dict(row):
+    return {k: row[k] for k in row.keys()} if row else None
+
 @printers_bp.route("/lists")
 def printers_lists():
     conn = db.get_conn()
