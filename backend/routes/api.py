@@ -10,7 +10,7 @@ import db
 
 api_bp = Blueprint('api', __name__)
 
-# --- FUNÇÃO AUXILIAR QUE ESTÁ FALTANDO ---
+
 def create_printer_entry(name, ip, token):
     conn = db.get_conn()
     cur = conn.cursor()
@@ -20,6 +20,49 @@ def create_printer_entry(name, ip, token):
     )
     conn.commit()
     conn.close()
+
+# No arquivo backend/routes/api.py
+
+def update_printer_connection(token, ip, last_status=None):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    # Verifica se o token existe
+    printer = cur.execute("SELECT id FROM printers WHERE token = ?", (token,)).fetchone()
+    if not printer:
+        conn.close()
+        return False
+    
+    # Atualiza IP, status e última vez vista
+    cur.execute("""
+        UPDATE printers 
+        SET ip = ?, last_status = ?, last_seen = CURRENT_TIMESTAMP 
+        WHERE token = ?
+    """, (ip, last_status, token))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def pop_next_for_token(token):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    # Pega o arquivo mais antigo na fila para esta impressora
+    item = cur.execute("""
+        SELECT id, filename, filepath FROM queue 
+        WHERE target_token = ? AND status = 'queued' 
+        ORDER BY created_at ASC LIMIT 1
+    """, (token,)).fetchone()
+    
+    if item:
+        # Marca como enviado para não repetir
+        cur.execute("UPDATE queue SET status = 'sent' WHERE id = ?", (item['id'],))
+        conn.commit()
+        result = {"filename": item['filename'], "filepath": item['filepath']}
+    else:
+        result = None
+        
+    conn.close()
+    return result
 
 @api_bp.route("/generate_token", methods=["POST"])
 def api_generate_token():
