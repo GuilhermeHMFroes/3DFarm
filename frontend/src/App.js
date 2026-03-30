@@ -196,6 +196,8 @@ function App() {
   const handleUpload = () => {
     if (!selectedFile) return;
 
+    const token = localStorage.getItem('token');
+
     const formData = new FormData();
     formData.append('file', selectedFile);
 
@@ -204,6 +206,7 @@ function App() {
     // 1. Envia o ficheiro para a pasta /uploads
     axios.post('/dashboard/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      'Authorization': `Bearer ${token}`
     })
     .then(response => {
       // Sucesso!
@@ -215,7 +218,12 @@ function App() {
       fetchFiles(); 
     })
     .catch(error => {
-      setUploadMessage('Erro ao enviar o ficheiro.');
+      // Se o erro for 401, o token provavelmente expirou
+      if (error.response && error.response.status === 401) {
+        setUploadMessage('Sessão expirada. Faça login novamente.');
+      } else {
+        setUploadMessage('Erro ao enviar o ficheiro.');
+      }
       console.error('Erro no upload:', error);
     });
   };

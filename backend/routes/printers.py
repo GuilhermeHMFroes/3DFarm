@@ -3,10 +3,12 @@ from flask_jwt_extended import jwt_required
 
 from pathlib import Path
 
+import db
+
 printers_bp = Blueprint('printers', __name__)
 
-@printers_bp.route("/list")
-def printers_list():
+@printers_bp.route("/lists")
+def printers_lists():
     conn = db.get_conn()
     cur = conn.cursor()
     cur.execute("SELECT id,name,ip,token,last_seen,last_status FROM printers ORDER BY id")
