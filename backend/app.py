@@ -13,6 +13,12 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_BUILD = BASE_DIR / ".." / "frontend" / "build"
 
+# Caminhos
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_FOLDER = BASE_DIR / "uploads"
+
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+
 
 #====================================================================================================
 
@@ -74,6 +80,11 @@ def create_app():
     
     # Registra as rotas separadas
     register_blueprints(app)
+
+    @app.route('/uploads/<path:filename>')
+    def serve_uploads(filename):
+        # Esta rota permite que a impressora baixe o arquivo gcode
+        return send_from_directory(str(UPLOAD_FOLDER), filename)
 
     # ROTA PARA SERVIR O FRONTEND REACT
     @app.route("/", defaults={"path": ""})
