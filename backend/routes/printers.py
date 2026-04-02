@@ -10,6 +10,101 @@ printers_bp = Blueprint('printers', __name__)
 def row_to_dict(row):
     return {k: row[k] for k in row.keys()} if row else None
 
+
+#====================================================================================================
+
+
+# NOVO: Função exclusiva para CRIAR (usada apenas pelo botão do site)
+def create_printer_entry(name, ip, token):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    # Tenta inserir. Se o token já existir (muito raro), o SQLite vai dar erro, o que é seguro.
+    cur.execute("INSERT INTO printers (name, ip, token) VALUES (?,?,?)",
+                (name, ip, token))
+    conn.commit()
+    conn.close()
+
+# NOVO: Função exclusiva para CONECTAR (usada pelo plugin)
+def update_printer_connection(token, ip, status_json=None):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    
+    # 1. Verifica se o token existe no banco
+    cur.execute("SELECT id FROM printers WHERE token = ?", (token,))
+    row = cur.fetchone()
+    
+    # Se não encontrou o token, retorna Falso (bloqueia a conexão)
+    if not row:
+        conn.close()
+        return False
+
+    # 2. Se existe, atualiza IP, Visto Por Último e Status.
+    #    NOTA: NÃO atualizamos o campo 'name'. O nome é protegido.
+    if status_json:
+        cur.execute("""UPDATE printers 
+                       SET ip=?, last_seen=CURRENT_TIMESTAMP, last_status=? 
+                       WHERE token=?""", (ip, status_json, token))
+    else:
+        cur.execute("""UPDATE printers 
+                       SET ip=?, last_seen=CURRENT_TIMESTAMP 
+                       WHERE token=?""", (ip, token))
+    
+    conn.commit()
+    conn.close()
+    return True # Sucesso
+
+def enqueue_file(filename, filepath, target_token=None):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("""INSERT INTO queue (filename, filepath, target_token, status)
+                   VALUES (?,?,?,'queued')""",
+                (filename, str(filepath), target_token))
+    conn.commit()
+    inserted_id = cur.lastrowid
+    conn.close()
+    return inserted_id
+
+def pop_next_for_token(token):
+    conn = db.get_conn()
+    cur = conn.cursor()
+
+    # --- DEBUG ANTES DA BUSCA ---
+    print(f"DEBUG DB: Procurando trabalho para token: '{token}'")
+    
+    # Vamos ver o que TEM na fila, só por curiosidade
+    cur.execute("SELECT id, target_token, status FROM queue WHERE status='queued'")
+    todos = cur.fetchall()
+    print(f"DEBUG DB: Itens na fila agora: {[dict(r) for r in todos]}")
+    # ----------------------------
+
+    cur.execute("""SELECT * FROM queue 
+                   WHERE status='queued' AND target_token=? 
+                   ORDER BY created_at LIMIT 1""", (token,))
+    row = cur.fetchone()
+
+    cur.execute("""SELECT * FROM queue
+                   WHERE status='queued' AND target_token=?
+                   ORDER BY created_at LIMIT 1""", (token,))
+    row = cur.fetchone()
+    if not row:
+        cur.execute("""SELECT * FROM queue
+                       WHERE status='queued' AND target_token IS NULL
+                       ORDER BY created_at LIMIT 1""")
+        row = cur.fetchone()
+    conn.close()
+    return row_to_dict(row) if row else None
+
+def mark_queue_status(qid, status):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE queue SET status=? WHERE id=?", (status, qid))
+    conn.commit()
+    conn.close()
+
+
+#====================================================================================================
+
+
 @printers_bp.route("/lists")
 def printers_lists():
     conn = db.get_conn()
