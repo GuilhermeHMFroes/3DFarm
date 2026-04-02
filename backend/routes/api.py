@@ -131,20 +131,39 @@ def api_fila():
     # --- DEBUG ---
     print(f"DEBUG: Impressora com token {token[:5]}... perguntou por trabalho.")
     
-    item = pop_next_for_token(token)
-    
-    if not item:
-        # --- DEBUG ---
+    # Buscamos a conexão e garantimos que ela retorne dicionários
+    conn = db.get_conn()
+    conn.row_factory = sqlite3.Row  # <--- ISSO É ESSENCIAL
+    cur = conn.cursor()
+
+    # Em vez de chamar pop_next_for_token (que pode estar com erro interno),
+    # fazemos a busca direta para garantir que o 'id' venha na query
+    row = cur.execute("""
+        SELECT id, filename, filepath 
+        FROM queue 
+        WHERE target_token = ? AND status = 'queued' 
+        ORDER BY id ASC LIMIT 1
+    """, (token,)).fetchone()
+
+    if not row:
+        conn.close()
         print(f"DEBUG: Nenhum trabalho encontrado para este token.")
         return jsonify({"novo_arquivo": False})
+
+    # Converte o resultado do SQLite para um dicionário real do Python
+    item = dict(row)
     
-    # --- DEBUG ---
+    # Agora o item['id'] não vai mais dar erro!
     print(f"DEBUG: TRABALHO ENCONTRADO! ID: {item['id']}, Arquivo: {item['filename']}")
 
-    mark_queue_status(item["id"], "sent")
+    # Atualiza o status para 'sent' (enviado)
+    cur.execute("UPDATE queue SET status='sent' WHERE id=?", (item["id"],))
+    conn.commit()
+    conn.close()
+
     filename = os.path.basename(item["filepath"])
     
-    # IMPORTANTE: Garante que a URL usa o IP externo, não localhost
+    # Garante que a URL seja gerada corretamente para a impressora baixar
     arquivo_url = request.url_root.rstrip("/") + f"/uploads/{filename}"
     
     print(f"DEBUG: Enviando URL: {arquivo_url}")
