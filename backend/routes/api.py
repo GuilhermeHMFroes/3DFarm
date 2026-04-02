@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory, Response, stream_with_context
 
 from extensions import socketio
 
@@ -8,7 +8,15 @@ import sqlite3
 
 import db
 
+import requests
+import os
+from pathlib import Path 
+
 api_bp = Blueprint('api', __name__)
+
+# Caminhos
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_FOLDER = BASE_DIR / "uploads"
 
 
 def create_printer_entry(name, ip, token):
@@ -18,6 +26,13 @@ def create_printer_entry(name, ip, token):
         "INSERT INTO printers (name, ip, token, last_status) VALUES (?, ?, ?, ?)",
         (name, ip, token, "offline")
     )
+    conn.commit()
+    conn.close()
+
+def mark_queue_status(qid, status):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE queue SET status=? WHERE id=?", (status, qid))
     conn.commit()
     conn.close()
 

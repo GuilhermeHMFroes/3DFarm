@@ -13,6 +13,51 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_BUILD = BASE_DIR / ".." / "frontend" / "build"
 
+
+#====================================================================================================
+
+
+def pop_next_for_token(token):
+    conn = db.get_conn()
+    cur = conn.cursor()
+
+    # --- DEBUG ANTES DA BUSCA ---
+    print(f"DEBUG DB: Procurando trabalho para token: '{token}'")
+    
+    # Vamos ver o que TEM na fila, só por curiosidade
+    cur.execute("SELECT id, target_token, status FROM queue WHERE status='queued'")
+    todos = cur.fetchall()
+    print(f"DEBUG DB: Itens na fila agora: {[dict(r) for r in todos]}")
+    # ----------------------------
+
+    cur.execute("""SELECT * FROM queue 
+                   WHERE status='queued' AND target_token=? 
+                   ORDER BY created_at LIMIT 1""", (token,))
+    row = cur.fetchone()
+
+    cur.execute("""SELECT * FROM queue
+                   WHERE status='queued' AND target_token=?
+                   ORDER BY created_at LIMIT 1""", (token,))
+    row = cur.fetchone()
+    if not row:
+        cur.execute("""SELECT * FROM queue
+                       WHERE status='queued' AND target_token IS NULL
+                       ORDER BY created_at LIMIT 1""")
+        row = cur.fetchone()
+    conn.close()
+    return row_to_dict(row) if row else None
+
+def mark_queue_status(qid, status):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE queue SET status=? WHERE id=?", (status, qid))
+    conn.commit()
+    conn.close()
+
+
+#====================================================================================================
+
+
 def create_app():
     app = Flask(__name__, static_folder=str(FRONTEND_BUILD), static_url_path="/")
     
