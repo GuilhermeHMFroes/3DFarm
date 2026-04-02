@@ -98,6 +98,25 @@ def dashboard_enqueue():
     
     return jsonify({"success": True, "queue_id": qid})
 
+
+#====================================================================================================
+
+
+def enqueue_file(filename, filepath, target_token=None):
+    conn = db.get_conn()
+    cur = conn.cursor()
+    cur.execute("""INSERT INTO queue (filename, filepath, target_token, status)
+                   VALUES (?,?,?,'queued')""",
+                (filename, str(filepath), target_token))
+    conn.commit()
+    inserted_id = cur.lastrowid
+    conn.close()
+    return inserted_id
+
+
+#====================================================================================================
+
+
 @dashboard_bp.route("/queue")
 @jwt_required()
 def dashboard_list_queue():
