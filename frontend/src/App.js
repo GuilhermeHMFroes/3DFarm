@@ -235,7 +235,7 @@ function App() {
     }
 
     // 2. Chama a função de DELETE
-    axios.delete(`/printers/delete/<int:printer_id>${printerId}`)
+    axios.delete(`/printers/delete/${printerId}`)
       .then(response => {
         if (response.data.success) {
           // 3. Sucesso! Remove a impressora da lista na tela (sem recarregar)

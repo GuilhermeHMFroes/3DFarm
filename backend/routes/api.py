@@ -212,6 +212,7 @@ def api_check_commands():
         cur.execute("DELETE FROM commands WHERE id=?", (cmd_id,))
         conn.commit()
         conn.close()
+        print(f"DEBUG: Comando '{command}' entregue para token {token}. ID do comando: {cmd_id}")
         return jsonify({"command": command})
     
     conn.close()
