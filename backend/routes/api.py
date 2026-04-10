@@ -284,24 +284,19 @@ def api_send_command():
     if not token or not cmd:
         return jsonify({"success": False, "message": "Dados inválidos"}), 400
 
-    # Grava no banco como backup
+    # 1. SALVA NO BANCO (Para o plugin que usa Polling /check_commands)
     conn = db.get_conn()
     cur = conn.cursor()
     cur.execute("INSERT INTO commands (target_token, command) VALUES (?,?)", (token, cmd))
     conn.commit()
     conn.close()
 
-    # TENTA ENVIAR VIA SOCKET (Instantâneo)
-    print(f"WS: Enviando comando '{cmd}' para a sala {token}")
-    
-    # IMPORTANTE: Adicione o namespace='/' explicitamente. 
-    # Às vezes o Blueprint perde a referência do namespace padrão.
-    socketio.emit(
-        'execute_command', 
-        {'command': cmd}, 
-        to=token, 
-        namespace='/'
-    )
-    
-    return jsonify({"success": True})
+    # 2. ENVIA VIA SOCKET (Para o plugin que usa Tempo Real)
+    try:
+        socketio.emit('execute_command', {"command": cmd}, room=token)
+        print(f"WS: Comando '{cmd}' enviado para sala {token}")
+    except Exception as e:
+        print(f"WS Erro: {e}")
+
+    return jsonify({"success": True, "message": "Comando enviado"})
 
