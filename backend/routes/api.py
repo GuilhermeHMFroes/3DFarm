@@ -296,7 +296,12 @@ def api_send_command():
     
     # IMPORTANTE: Adicione o namespace='/' explicitamente. 
     # Às vezes o Blueprint perde a referência do namespace padrão.
-    socketio.emit('execute_command', {'command': cmd}, to=token, namespace='/')
+    socketio.emit(
+        'execute_command', 
+        {'command': cmd}, 
+        to=token, 
+        namespace='/'
+    )
     
     return jsonify({"success": True})
 
