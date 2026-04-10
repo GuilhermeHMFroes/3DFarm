@@ -58,6 +58,7 @@ def update_printer_connection(token, ip, status_json=None):
 
 
 @printers_bp.route("/lists")
+@jwt_required()
 def printers_lists():
     conn = db.get_conn()
     cur = conn.cursor()
@@ -67,6 +68,7 @@ def printers_lists():
     return jsonify({"success": True, "printers": [row_to_dict(r) for r in rows]})
 
 @printers_bp.route("/register_printer", methods=["POST"])
+@jwt_required()
 def printers_register_printer():
     data = request.get_json() or {}
     token = data.get("token")
@@ -85,6 +87,7 @@ def printers_register_printer():
 
 #Deletar Impressora
 @printers_bp.route("/delete/<int:printer_id>", methods=["DELETE"])
+@jwt_required()
 def printers_delete_printer(printer_id):
     """
     Apaga uma impressora do banco de dados usando o ID dela.
