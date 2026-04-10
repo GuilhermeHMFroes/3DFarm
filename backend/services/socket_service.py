@@ -1,6 +1,7 @@
 
 from extensions import socketio
 from flask_socketio import emit, join_room, leave_room
+from flask import request
 
 # --- ROTAS DE WEBSOCKET (O Túnel Reverso) ---
 
@@ -11,8 +12,8 @@ def handle_printer_connect(data):
     if token:
         # A impressora entra numa sala exclusiva com o nome do token
         join_room(token)
-        print(f"WS: Impressora conectada na sala: {token}")
-        emit('server_ack', {'status': 'connected'}, to=token)
+        print(f"DEBUG SALA: Impressora {token} entrou na sala. ID do Socket: {request.sid}")
+        emit('server_ack', {'status': 'connected'}, room=token)
 
 # 2. SITE (REACT) QUER ASSISTIR
 @socketio.on('join_stream')
