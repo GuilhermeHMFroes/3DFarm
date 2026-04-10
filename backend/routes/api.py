@@ -292,8 +292,11 @@ def api_send_command():
     conn.close()
 
     # TENTA ENVIAR VIA SOCKET (Instantâneo)
-    print(f"WS: Enviando comando '{cmd}' para {token}")
-    socketio.emit('execute_command', {'cmd': cmd}, to=token)
+    print(f"WS: Enviando comando '{cmd}' para a sala {token}")
     
-    return jsonify({"success": True, "message": f"Comando {cmd} enviado via túnel."})
+    # IMPORTANTE: Adicione o namespace='/' explicitamente. 
+    # Às vezes o Blueprint perde a referência do namespace padrão.
+    socketio.emit('execute_command', {'command': cmd}, to=token, namespace='/')
+    
+    return jsonify({"success": True})
 
