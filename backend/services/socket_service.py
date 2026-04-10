@@ -10,10 +10,10 @@ from flask import request
 def handle_printer_connect(data):
     token = data.get('token')
     if token:
-        # A impressora entra numa sala exclusiva com o nome do token
         join_room(token)
-        print(f"DEBUG SALA: Impressora {token} entrou na sala. ID do Socket: {request.sid}")
-        emit('server_ack', {'status': 'connected'}, room=token)
+        # Se este print não aparecer no terminal do servidor, o teste_ws não enviou o evento certo
+        print(f"✅ WS: Impressora {token} entrou na sala com sucesso!") 
+        emit('server_ack', {'status': 'connected'}, to=token)
 
 # 2. SITE (REACT) QUER ASSISTIR
 @socketio.on('join_stream')

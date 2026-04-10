@@ -90,7 +90,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
     const fetchStatus = () => {
       //axios.get('/api/printers')
 
-      axios.get('/printers/list')
+      axios.get('/printers/lists')
 
         .then(res => {
           if (res.data.success) {

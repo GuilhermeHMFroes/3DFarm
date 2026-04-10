@@ -293,10 +293,11 @@ def api_send_command():
 
     # 2. ENVIA VIA SOCKET (Para o plugin que usa Tempo Real)
     try:
-        socketio.emit('execute_command', {"command": cmd}, room=token)
-        print(f"WS: Comando '{cmd}' enviado para sala {token}")
+        # Use 'to=' em vez de 'room=' e garanta o namespace='/'
+        socketio.emit('execute_command', {"command": cmd}, to=token, namespace='/')
+        print(f"WS: Comando '{cmd}' disparado para a sala {token}")
     except Exception as e:
-        print(f"WS Erro: {e}")
+        print(f"Erro ao emitir socket: {e}")
 
     return jsonify({"success": True, "message": "Comando enviado"})
 

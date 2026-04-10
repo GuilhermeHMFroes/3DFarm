@@ -77,6 +77,8 @@ def create_app():
     socketio.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+
+    from services import socket_service  # Importa o serviço de WebSocket para registrar os eventos
     
     # Registra as rotas separadas
     register_blueprints(app)
