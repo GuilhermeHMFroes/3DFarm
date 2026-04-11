@@ -45,9 +45,9 @@ def handle_leave_stream(data):
 @socketio.on('video_frame')
 def handle_video_frame(data):
     token = data.get('token')
-    image_data = data.get('image')
+    image_data = data.get('image') # Base64 vindo do plugin
     
     if token and image_data:
-        # Envia apenas para quem está na sala de stream
+        # Repassa a imagem apenas para a sala de visualização específica
         emit('render_frame', {'image': image_data}, to=f"stream_{token}")
 

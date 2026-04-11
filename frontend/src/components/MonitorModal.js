@@ -50,18 +50,21 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
     });
 
     socket.on('render_frame', (data) => {
-      try {
-        const blob = new Blob([data.image], { type: 'image/jpeg' });
-        const url = URL.createObjectURL(blob);
-        
-        setImageSrc(url);
-
-        if (lastUrlRef.current) {
-          URL.revokeObjectURL(lastUrlRef.current);
-        }
-        lastUrlRef.current = url;
-      } catch (err) {
-        console.error("Erro ao processar frame:", err);
+    // Se o dado vier como string Base64 (recomendado para fluidez)
+      if (typeof data.image === 'string') {
+          setImageSrc(`data:image/jpeg;base64,${data.image}`);
+      } 
+      // Caso você prefira manter o envio como binário (Blob)
+      else {
+          try {
+              const blob = new Blob([data.image], { type: 'image/jpeg' });
+              const url = URL.createObjectURL(blob);
+              setImageSrc(url);
+              if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+              lastUrlRef.current = url;
+          } catch (err) {
+              console.error("Erro ao processar frame binário:", err);
+          }
       }
     });
 
