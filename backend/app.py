@@ -9,6 +9,8 @@ import db
 
 from pathlib import Path
 
+from utils import key_file # Garante a chave criptográfica para JWT
+
 # Caminhos
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / "uploads"
@@ -43,7 +45,10 @@ def create_app():
         app = Flask(__name__)
     
     # Configurações do App
-    app.config["JWT_SECRET_KEY"] = "l~fdE;,iQcD8xAx-<95JI8c#7Em)1O" # Chave secreta para JWT , deve ser mudada quando for para produção
+    #app.config["JWT_SECRET_KEY"] = "l~fdE;,iQcD8xAx-<95JI8c#7Em)1O" # Chave secreta para JWT , deve ser mudada quando for para produção
+
+    app.config["JWT_SECRET_KEY"] = key_file()
+
     
     #CORS(app)
     CORS(app, resources={r"/*": {"origins": "*"}})

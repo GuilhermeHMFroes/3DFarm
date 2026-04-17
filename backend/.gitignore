@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Eclusão da chave do JWT do repositório, para segurança. A chave é gerada dinamicamente a partir do arquivo utils.py
+
+.jwt_key
+
 #banco de dados
 
 fazenda.db

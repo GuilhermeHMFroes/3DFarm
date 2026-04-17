@@ -26,7 +26,7 @@ import logoPrincipal from './assets/logoTrasnparente.png';
 
 // Se estiver rodando o comando 'npm start', o process.env.NODE_ENV é 'development'
 export const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:5000' 
+  ? 'http://192.168.3.79:5000' 
   : window.location.origin
 
 // Configure o Axios para usar essa base automaticamente
