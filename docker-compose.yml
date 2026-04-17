@@ -14,3 +14,13 @@ services:
       # Mantém o mapeamento de uploads
       - ./backend/uploads:/app/uploads
     restart: always
+
+  # --- ADICIONANDO O TÚNEL AQUI ---
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare_tunnel
+    restart: always
+    command: tunnel run
+    environment:
+      #docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiOWFjZDVkMjBhMDAyNTEzYTkxMmFlMWVlNGJjMzJkNGEiLCJ0IjoiYjhkMjYwZWMtM2QyOS00ZGQ0LTg4N2MtOWVlMzc5Y2IyNzNiIiwicyI6Ilpqa3pOVFkzTVdJdFlXSXhPUzAwT1RJd0xUZ3hZamt0WW1KbFlUazRNVEkxWXpnMCJ9
+      - TUNNEL_TOKEN=COLE_AQUI_O_SEU_TOKEN_DA_CLOUDFLAREeyJhIjoiOWFjZDVkMjBhMDAyNTEzYTkxMmFlMWVlNGJjMzJkNGEiLCJ0IjoiYjhkMjYwZWMtM2QyOS00ZGQ0LTg4N2MtOWVlMzc5Y2IyNzNiIiwicyI6Ilpqa3pOVFkzTVdJdFlXSXhPUzAwT1RJd0xUZ3hZamt0WW1KbFlUazRNVEkxWXpnMCJ9
