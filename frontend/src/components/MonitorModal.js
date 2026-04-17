@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Importa o cliente socket
 
+import { API_BASE_URL } from '../App';
+
 import { FaTimes, FaPause, FaPlay, FaStop, FaThermometerHalf, FaTerminal, FaArrowRight, 
   FaFire, FaVideoSlash, FaArrowsAlt, FaCaretUp, FaCaretDown, FaCaretLeft, FaCaretRight, 
   FaHome } from 'react-icons/fa';
@@ -33,9 +35,10 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
 
   // --- 1. LÓGICA DO WEBSOCKET (VÍDEO) ---
   useEffect(() => {
+
     // Criamos a instância do socket
-    const socket = io(SERVER_URL, {
-      transports: ['websocket'],
+    const socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
       upgrade: false
     });
     socketRef.current = socket;
@@ -50,6 +53,9 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
     });
 
     socket.on('render_frame', (data) => {
+
+      const webcamUrl = `${API_BASE_URL}/api/proxy/webcam/${printer.token}`;
+      
     // Se o dado vier como string Base64 (recomendado para fluidez)
       if (typeof data.image === 'string') {
           setImageSrc(`data:image/jpeg;base64,${data.image}`);
@@ -85,7 +91,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
       }
     };
     // REMOVIDO 'isConnected' daqui para evitar o loop infinito!
-  }, [printer.token, SERVER_URL]);
+  }, [printer.token]);
 
 
   // --- 2. LÓGICA DE DADOS (TEMPERATURA) ---

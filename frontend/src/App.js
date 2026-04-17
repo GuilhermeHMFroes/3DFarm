@@ -24,6 +24,14 @@ import logoPrincipal from './assets/logoTrasnparente.png';
 
 // --- Componentes de UI Reutilizáveis ---
 
+// Se estiver rodando o comando 'npm start', o process.env.NODE_ENV é 'development'
+export const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5000' 
+  : window.location.origin
+
+// Configure o Axios para usar essa base automaticamente
+axios.defaults.baseURL = API_BASE_URL;
+
 const Card = ({ children }) => (
   <div className="bg-farm-dark-blue/80 p-6 rounded-xl border border-farm-medium-grey/50 backdrop-blur-lg ">
     {children}
@@ -108,6 +116,8 @@ function App() {
   }, []);
 
   useEffect(() => {
+
+
     const checkAuth = async () => {
       try {
         // 1. Verifica se precisa de Setup (primeiro admin)
