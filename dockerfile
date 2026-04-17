@@ -25,4 +25,4 @@ COPY --from=frontend-build /app/frontend/build ./static
 RUN mkdir -p uploads
 
 EXPOSE 5000
-CMD ["python", "main.py"]
+CMD ["python", "app.py"]
