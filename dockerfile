@@ -19,7 +19,7 @@ COPY backend/ .
 
 # MÁGICA: Copia o build do React para a pasta 'static' dentro do backend
 # O seu app.py com a função docker_dist vai encontrar essa pasta automaticamente
-COPY --from=frontend-build /app/frontend/dist ./static
+COPY --from=frontend-build /app/frontend/build ./static
 
 # Criar a pasta de uploads caso não exista (importante para os G-codes)
 RUN mkdir -p uploads
