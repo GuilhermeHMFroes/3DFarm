@@ -45,8 +45,6 @@ def create_app():
         app = Flask(__name__)
     
     # Configurações do App
-    #app.config["JWT_SECRET_KEY"] = "l~fdE;,iQcD8xAx-<95JI8c#7Em)1O" # Chave secreta para JWT , deve ser mudada quando for para produção
-
     app.config["JWT_SECRET_KEY"] = key_file()
 
     
