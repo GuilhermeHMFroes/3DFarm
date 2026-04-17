@@ -18,11 +18,14 @@ services:
   # --- ADICIONANDO O TÚNEL AQUI ---
 
   #docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiOWFjZDVkMjBhMDAyNTEzYTkxMmFlMWVlNGJjMzJkNGEiLCJ0IjoiYjhkMjYwZWMtM2QyOS00ZGQ0LTg4N2MtOWVlMzc5Y2IyNzNiIiwicyI6Ilpqa3pOVFkzTVdJdFlXSXhPUzAwT1RJd0xUZ3hZamt0WW1KbFlUazRNVEkxWXpnMCJ9
-  tunnel:
+  cloudflare-tunnel:
     image: cloudflare/cloudflared:latest
     container_name: cloudflare_tunnel
     restart: always
-    # Mudamos o 'command' para ler o token diretamente da variável de ambiente
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
-    environment:
-      - TUNNEL_TOKEN=eyJhIjoiOWFjZDVkMjBhMDAyNTEzYTkxMmFlMWVlNGJjMzJkNGEiLCJ0IjoiYjhkMjYwZWMtM2QyOS00ZGQ0LTg4N2MtOWVlMzc5Y2IyNzNiIiwicyI6Ilpqa3pOVFkzTVdJdFlXSXhPUzAwT1RJd0xUZ3hZamt0WW1KbFlUazRNVEkxWXpnMCJ9
+    # Passamos o comando completo aqui, sem depender de variáveis de ambiente externas
+    command: 
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - eyJhIjoiOWFjZDVkMjBhMDAyNTEzYTkxMmFlMWVlNGJjMzJkNGEiLCJ0IjoiYjhkMjYwZWMtM2QyOS00ZGQ0LTg4N2MtOWVlMzc5Y2IyNzNiIiwicyI6Ilpqa3pOVFkzTVdJdFlXSXhPUzAwT1RJd0xUZ3hZamt0WW1KbFlUazRNVEkxWXpnMCJ9
