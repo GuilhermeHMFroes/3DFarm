@@ -8,38 +8,49 @@ from routes import register_blueprints
 import db
 
 from pathlib import Path
+import os
 
 from utils import key_file # Garante a chave criptográfica para JWT
 
-# Caminhos
+# --- CONFIGURAÇÃO DE CAMINHOS DINÂMICOS ---
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / "uploads"
-
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+
+# Lógica de detecção do Frontend
+# No PC: ../frontend/dist (ou build) | No Docker: ./static
+local_dist = BASE_DIR.parent / "frontend" / "build" # ou "dist", verifique qual o npm gera
+docker_dist = BASE_DIR / "static"
+
+if local_dist.exists():
+    static_folder_path = str(local_dist)
+else:
+    static_folder_path = str(docker_dist)
 
 def create_app():
 
-    front = False # Se quiser servir o frontend pelo Flask, mude para True se não, deixe como False e use 'npm start' para rodar o React separadamente (recomendado True para desenvolvimento)
+    front = True # Se quiser servir o frontend pelo Flask, mude para True se não, deixe como False e use 'npm start' para rodar o React separadamente (recomendado True para desenvolvimento)
 
     if front:
 
         # Configuração de Caminhos para o Frontend
-        BASE_DIR = Path(__file__).resolve().parent
-        FRONTEND_BUILD = BASE_DIR / ".." / "frontend" / "build"
-
-        app = Flask(__name__, static_folder=str(FRONTEND_BUILD), static_url_path="/")
+        app = Flask(__name__, static_folder=static_folder_path, static_url_path="/")
 
         # ROTA PARA SERVIR O FRONTEND REACT
         @app.route("/", defaults={"path": ""})
         @app.route("/<path:path>")
         
         def serve_react(path):
-            # Se o caminho solicitado existe na pasta build (ex: imagens, js), serve o arquivo
-            if path != "" and (FRONTEND_BUILD / path).exists():
-                return send_from_directory(str(FRONTEND_BUILD), path)
-            # Caso contrário (rotas do React Router), serve o index.html
-            else:
-                return send_from_directory(str(FRONTEND_BUILD), "index.html")
+            # 1. Tenta servir arquivos estáticos reais (js, css, imagens)
+            if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+                return send_from_directory(app.static_folder, path)
+            
+            # 2. Bloqueia erro 404 em rotas que deveriam ser da API
+            if path.startswith("api/"):
+                return {"error": "API Route Not Found"}, 404
+            
+            # 3. Tudo o mais entrega o index.html para o React Router
+            return send_from_directory(app.static_folder, "index.html")
 
     else:
         app = Flask(__name__)
