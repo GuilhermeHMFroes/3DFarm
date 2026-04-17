@@ -12,7 +12,7 @@ def key_file():
     # Detecta se está no Docker ou Local
     if os.path.exists("/app"):
         # Se estiver no Docker, salva na pasta de volume mapeada
-        KEY_FILE = Path("/app/data/.jwt_key"
+        KEY_FILE = Path("/app/data/.jwt_key")
 
     else:
         # Se estiver no PC, salva na pasta do projeto normalmente
