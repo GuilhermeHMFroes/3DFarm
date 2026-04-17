@@ -8,10 +8,9 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Persiste o Banco de Dados
-      - ./backend/fazenda.db:/app/fazenda.db
-      # Persiste a Chave JWT (para não deslogar todo mundo se o container reiniciar)
-      - ./backend/.jwt_key:/app/.jwt_key
-      # Persiste os arquivos G-Code que as impressoras vão baixar
+      # Mapeia a pasta backend inteira para uma pasta de dados interna
+      # Isso garante que arquivos criados pelo Python persistam corretamente
+      - ./backend:/app/data
+      # Mantém o mapeamento de uploads
       - ./backend/uploads:/app/uploads
     restart: always
