@@ -2,11 +2,21 @@
 
 import sqlite3
 from pathlib import Path
+import os
 
-DB_PATH = Path(__file__).parent / "fazenda.db"
+# --- LÓGICA DE CAMINHO DINÂMICO ---
+if os.path.exists("/app"):
+    # No Docker, usamos a pasta mapeada pelo volume
+    DB_PATH = Path("/app/data/fazenda.db")
+else:
+    # No seu computador, usa a pasta do projeto
+    DB_PATH = Path(__file__).parent / "fazenda.db"
+
+# Garante que a pasta pai exista (evita erro de 'Folder not found')
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
 
