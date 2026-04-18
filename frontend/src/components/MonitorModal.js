@@ -30,7 +30,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
   // Se estiver rodando local, window.location.origin pode ser localhost:3000, 
   // então forçamos a porta 5000 se necessário, ou usa a URL da API configurada.
   const SERVER_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000' 
+    ? `http://${window.location.hostname}:5000` 
     : window.location.origin;
 
   // --- 1. LÓGICA DO WEBSOCKET (VÍDEO) ---
