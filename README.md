@@ -76,10 +76,10 @@ Agora vamos executar o backend.
 
 Para instalar as dependências do flask necessárias no projeto execute os seguintes comandos na pasta raiz do projeto `3DFARM/`:
 
-`cd backend/` para acessar a pasta do backend<br>
-`python3 -m venv .venv` -> para criar o ambiente virtual do python<br>
-`source .venv/bin/activate` -> para ativar o ambiente virtual <br>
-`pip  install -r requirements.txt` -> para instalar as dependêncas necessárias para rodas o código do backend<br>
-`python3 app.py` -> Para iniciar o backend <br>
+1. `cd backend/` para acessar a pasta do backend<br>
+2. `python3 -m venv .venv` -> para criar o ambiente virtual do python<br>
+3. `source .venv/bin/activate` -> para ativar o ambiente virtual <br>
+4. `pip  install -r requirements.txt` -> para instalar as dependêncas necessárias para rodas o código do backend<br>
+5. `python3 app.py` -> Para iniciar o backend <br>
 
 A única observação para o backend é a da linha 32 para rodar ou não o frotend junto.
