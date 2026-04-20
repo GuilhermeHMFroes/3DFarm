@@ -11,6 +11,8 @@ import MonitorModal from './components/MonitorModal'; // <--- Importa o Modal pa
 import ChangePassModal from './components/ChangePassModal';
 import AdminUsersModal from './components/AdminUsersModal';
 
+import Footer from './components/Footer';
+
 // Ícones (Instale com: npm install react-icons)
 import { 
   FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, 
@@ -514,297 +516,318 @@ function App() {
         />
       )}
     
-      <div className="max-w-7xl mx-auto p-5">
+      <div className="  flex flex-col min-h-screen">
+
+        <div className="max-w-screen-2xl mx-auto w-full flex-1 p-5">
+
+          <div>
         
-        {/* Cabeçalho */}
-        <header className="
-          flex flex-col md:flex-row justify-between items-center md:gap-0 gap-5 mb-8 p-6 bg-black/20 border border-farm-medium-grey/50 rounded-xl backdrop-blur-lg relative z-[1000]">
-          
-          <div className="flex items-center gap-4">
-            <img src={logoPrincipal} alt="3D Farm Logo" className="h-10" />
-            <h1 className="text-2xl font-bold text-farm-light-grey m-0">
-              3D Print Farm
-            </h1>
-          </div>
-          
-
-          <div className="flex items-center gap-4 relative z-[1000]">
-
-            {/* BOTÃO DE ADICIONARIMPRESSORA */}
-            <button 
-              className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
-              onClick={() => setShowModal(true)} // Abre o modal de adicionar impressora
-            >
-              <FaPlus /> Adicionar Impressora
-            </button>
-
-            {/* BOTÃO DE PERFIL */}
-            <div className="relative group z-[100]">
-              <button className="p-3 bg-farm-medium-grey/20 text-white rounded-full border border-white/10 hover:bg-farm-medium-grey/40 transition-all">
-                <FaUserCircle size={20} />
-              </button>
+            {/* Cabeçalho */}
+            <header className="
+              flex flex-col md:flex-row justify-between items-center md:gap-0 gap-5 mb-8 p-6 bg-black/20 border border-farm-medium-grey/50 rounded-xl backdrop-blur-lg relative z-[1000]">
               
-              {/* Menu Dropdown */}
-              <div className="absolute right-0 pt-2 w-52 bg-farm-dark-blue border border-farm-medium-grey rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] hidden group-hover:block z-[1100] overflow-hidden">
-                <div className="p-3 border-b border-white/10 text-xs text-farm-light-grey">
-                  Olá, <b>{user.username}</b> ({user.role})
-                </div>
-                <button onClick={() => setShowChangePassModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
-                  <FaKey /> Mudar Senha
-                </button>
-                {user.role === 'admin' && (
-                  <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
-                    <FaUsersCog /> Gerir Utilizadores
+              <div className="flex items-center gap-4">
+                <img src={logoPrincipal} alt="3D Farm Logo" className="h-10" />
+                <h1 className="text-2xl font-bold text-farm-light-grey m-0">
+                  3D Print Farm
+                </h1>
+              </div>
+              
+
+              <div className="flex items-center gap-4 relative z-[1000]">
+
+                {/* BOTÃO que redireciona para instalar o plugin */}
+
+                <a href="https://github.com/GuilhermeHMFroes/octoprint-fazenda3d" target="_blank" rel="noopener noreferrer">
+                  <button 
+                    className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                    <FaPlus /> Instalar Plugin
                   </button>
+                </a>
+
+                <button 
+                  className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                  onClick={() => setShowModal(true)} // Abre o modal de adicionar impressora
+                >
+                  <FaPlus /> Adicionar Impressora
+                </button>
+
+                {/* BOTÃO DE PERFIL */}
+                <div className="relative group z-[100]">
+                  <button className="p-3 bg-farm-medium-grey/20 text-white rounded-full border border-white/10 hover:bg-farm-medium-grey/40 transition-all">
+                    <FaUserCircle size={20} />
+                  </button>
+                  
+                  {/* Menu Dropdown */}
+                  <div className="absolute right-0 pt-2 w-52 bg-farm-dark-blue border border-farm-medium-grey rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] hidden group-hover:block z-[1100] overflow-hidden">
+                    <div className="p-3 border-b border-white/10 text-xs text-farm-light-grey">
+                      Olá, <b>{user.username}</b> ({user.role})
+                    </div>
+                    <button onClick={() => setShowChangePassModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                      <FaKey /> Mudar Senha
+                    </button>
+                    {user.role === 'admin' && (
+                      <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                        <FaUsersCog /> Gerir Utilizadores
+                      </button>
+                    )}
+                    <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                      <FaSignOutAlt /> Sair
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </header>
+
+            {/* --- TELA PRINCIPAL (GRID COM 3 COLUNAS) --- */}
+            <main className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              
+              {/* Card 1: Impressoras Conectadas */}
+              <Card>
+                <CardTitle icon={<FaPrint />} title="Impressoras Cadastradas" />
+                <ul className="space-y-3 max-h-96 overflow-y-auto">
+                  
+                  {printers.length === 0 && <p className="text-farm-medium-grey">Nenhuma impressora registrada.</p>}
+                  
+                  {printers.map(printer => (
+                    <li key={printer.id} className="flex justify-between items-center py-2 border-b border-dashed border-farm-medium-grey">
+                      
+                      {/* Lado Esquerdo: Nome */}
+                      <span className='truncate'>{printer.name || 'Impressora Sem Nome'}</span>
+                      
+                      {/* Lado Direito: Wrapper para Status e Botões */}
+                      <div className="flex items-center gap-4 flex-shrink-0"> {/* Aumentei o 'gap-3' para 'gap-4' */}
+                        
+                        {/* Status (Token) */}
+                        <span className={`font-mono text-xs text-farm-medium-blue`}>
+                          ...{printer.token.slice(-6)}
+                        </span>
+                        
+                        {/* --- O NOVO BOTÃO DE COPIAR --- */}
+                        <button 
+                          onClick={() => handleCopyToken(printer.token)}
+                          className="text-farm-medium-blue hover:text-farm-light-grey transition-colors"
+                          title="Copiar Token Inteiro"
+                        >
+                          <FaCopy />
+                        </button>
+                        
+                        {/* Botão de Apagar (Já existente) */}
+                        <button 
+                          onClick={() => handleDeletePrinter(printer.id, printer.name)}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                          title="Excluir Impressora"
+                        >
+                          <FaTrash />
+                        </button>
+
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              
+              
+              {/* Card 2: Fila de Impressão */}
+              <Card>
+                <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
+                <ul className="space-y-3 max-h-96 overflow-y-auto">
+                  {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
+                  
+                  {files.map((filename, index) => (
+                    <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
+                      <div className="flex items-center gap-3 truncate">
+                        <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
+                        <span className="truncate" title={filename}>{filename}</span>
+                      </div>
+                      
+                      {/* Botão de Excluir Arquivo */}
+                      <button 
+                        onClick={() => handleDeleteFile(filename)}
+                        className="text-red-500 hover:text-red-300 p-2 transition-colors"
+                        title="Apagar Arquivo"
+                      >
+                        <FaTrash />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              {/* Card 3: Upload de G-code */}
+              <Card>
+                <CardTitle icon={<FaUpload />} title="Upload de G-code" />
+                
+                <label 
+                  htmlFor="file-upload" 
+                  // Adicionamos os eventos aqui
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`
+                    flex flex-col items-center justify-center w-full h-48 px-4 
+                    border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                    ${isDragging 
+                      ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
+                      : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
+                    }
+                  `}
+                >
+                  <FaUpload className={`text-4xl mb-2 transition-colors ${isDragging ? 'text-farm-orange' : 'text-farm-medium-grey'}`} />
+                  
+                  <p className="text-farm-medium-grey font-medium">
+                    {isDragging ? "Solte o arquivo aqui!" : "Arraste um G-code"}
+                  </p>
+                  
+                  {!isDragging && <p className="text-xs text-farm-medium-grey mt-1">ou clique para selecionar</p>}
+                </label>
+                
+                <input id="file-upload" type="file" className="hidden" accept=".gcode,.gco" onChange={handleFileChange} />
+                
+                {/* Visualização do arquivo selecionado */}
+                {selectedFile && (
+                  <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
+                    <div className="flex items-center gap-2 truncate">
+                      <FaFileCode className="text-farm-orange flex-shrink-0" />
+                      <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
+                    </div>
+                    <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
+                  </div>
                 )}
-                <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
-                  <FaSignOutAlt /> Sair
+                
+                <button 
+                  onClick={handleUpload} 
+                  disabled={!selectedFile} 
+                  className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02]"
+                >
+                  Carregar G-Code
                 </button>
-              </div>
-            </div>
+                
+                {uploadMessage && <p className="text-center mt-3 font-bold text-farm-orange text-sm animate-pulse">{uploadMessage}</p>}
+              </Card>
+              
+              {/* Card 4 : Impressoras Ativas */}
+              
+              {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
+
+                  {activePrinters.map(p => (
+                    <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                      <span className="truncate flex-1" title={p.name}>
+                        {p.name || 'Impressora Sem Nome'}
+                      </span>
+                    </li>
+                  ))} */}
+
+              <Card className="border-t-4 border-t-green-500">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
+                    <FaCog className="animate-spin" /> Imprimindo
+                  </h3>
+                  <span className="text-3xl font-bold">{activePrinters.length}</span>
+                </div>
+                <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
+                  {activePrinters.map(p => (
+                    <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
+                      <div className="flex flex-col truncate pr-2">
+                        <span className="font-bold text-white truncate">{p.name}</span>
+                        <span className="text-xs text-farm-medium-blue truncate flex items-center gap-1">
+                          <FaFileCode size={10} /> {p.jobName}
+                        </span>
+                      </div>
+                      
+                      <button 
+                        onClick={() => setSelectedPrinterForMonitor(p)}
+                        className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                        title="Monitorar Câmera e Controles"
+                      >
+                        <FaEye />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              {/* Card 5: Impressoras Ociosas */}
+              <Card className="border-t-4 border-t-farm-medium-blue">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
+                    <FaCheckCircle /> Ociosas
+                  </h3>
+                  <span className="text-3xl font-bold">{idlePrinters.length}</span>
+                </div>
+                
+                <ul className="space-y-2 max-h-40 overflow-y-auto">
+                  {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
+                  
+                  {idlePrinters.map(p => (
+                    <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
+                      <span className="truncate flex-1" title={p.name}>
+                        {p.name || 'Sem Nome'}
+                      </span>
+                      
+                      <div className="flex items-center gap-2 ml-2">
+
+                        {/* BOTÃO DE IMPRIMIR */}
+                        <button 
+                          onClick={() => handleOpenPrintModal(p)}
+                          className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                          title="Imprimir nesta impressora"
+                        >
+                          <FaPlay size={10} />
+                        </button>
+
+                        <button 
+                          onClick={() => setSelectedPrinterForMonitor(p)}
+                          className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                          title="Monitorar Câmera e Controles"
+                        >
+                          <FaEye />
+                        </button>
+
+                      </div>
+
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              {/* Card 6: Impressoras Desconectadas */}
+              <Card className="border-t-4 border-t-red-500">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
+                    <FaExclamationTriangle /> Desconectadas
+                  </h3>
+                  <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
+                </div>
+                <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+                  {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
+
+                  {disconnectedPrinters.map(p => (
+                    <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                      <span className="truncate flex-1" title={p.name}>
+                        {p.name || 'Impressora Sem Nome'}
+                      </span>
+                    </li>
+                  ))}
+
+                </ul>
+              </Card>
+
+            </main>
 
           </div>
 
-        </header>
+        </div>
 
-        {/* --- TELA PRINCIPAL (GRID COM 3 COLUNAS) --- */}
-        <main className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
-          {/* Card 1: Impressoras Conectadas */}
-          <Card>
-            <CardTitle icon={<FaPrint />} title="Impressoras Cadastradas" />
-            <ul className="space-y-3 max-h-96 overflow-y-auto">
-              
-              {printers.length === 0 && <p className="text-farm-medium-grey">Nenhuma impressora registrada.</p>}
-              
-              {printers.map(printer => (
-                <li key={printer.id} className="flex justify-between items-center py-2 border-b border-dashed border-farm-medium-grey">
-                  
-                  {/* Lado Esquerdo: Nome */}
-                  <span className='truncate'>{printer.name || 'Impressora Sem Nome'}</span>
-                  
-                  {/* Lado Direito: Wrapper para Status e Botões */}
-                  <div className="flex items-center gap-4 flex-shrink-0"> {/* Aumentei o 'gap-3' para 'gap-4' */}
-                    
-                    {/* Status (Token) */}
-                    <span className={`font-mono text-xs text-farm-medium-blue`}>
-                      ...{printer.token.slice(-6)}
-                    </span>
-                    
-                    {/* --- O NOVO BOTÃO DE COPIAR --- */}
-                    <button 
-                      onClick={() => handleCopyToken(printer.token)}
-                      className="text-farm-medium-blue hover:text-farm-light-grey transition-colors"
-                      title="Copiar Token Inteiro"
-                    >
-                      <FaCopy />
-                    </button>
-                    
-                    {/* Botão de Apagar (Já existente) */}
-                    <button 
-                      onClick={() => handleDeletePrinter(printer.id, printer.name)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                      title="Excluir Impressora"
-                    >
-                      <FaTrash />
-                    </button>
+        <Footer />
 
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          
-          
-          {/* Card 2: Fila de Impressão */}
-          <Card>
-            <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
-            <ul className="space-y-3 max-h-96 overflow-y-auto">
-              {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
-              
-              {files.map((filename, index) => (
-                <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
-                  <div className="flex items-center gap-3 truncate">
-                    <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
-                    <span className="truncate" title={filename}>{filename}</span>
-                  </div>
-                  
-                  {/* Botão de Excluir Arquivo */}
-                  <button 
-                    onClick={() => handleDeleteFile(filename)}
-                    className="text-red-500 hover:text-red-300 p-2 transition-colors"
-                    title="Apagar Arquivo"
-                  >
-                    <FaTrash />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Card 3: Upload de G-code */}
-          <Card>
-            <CardTitle icon={<FaUpload />} title="Upload de G-code" />
-            
-            <label 
-              htmlFor="file-upload" 
-              // Adicionamos os eventos aqui
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`
-                flex flex-col items-center justify-center w-full h-48 px-4 
-                border-2 border-dashed rounded-lg cursor-pointer transition-colors
-                ${isDragging 
-                  ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
-                  : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
-                }
-              `}
-            >
-              <FaUpload className={`text-4xl mb-2 transition-colors ${isDragging ? 'text-farm-orange' : 'text-farm-medium-grey'}`} />
-              
-              <p className="text-farm-medium-grey font-medium">
-                {isDragging ? "Solte o arquivo aqui!" : "Arraste um G-code"}
-              </p>
-              
-              {!isDragging && <p className="text-xs text-farm-medium-grey mt-1">ou clique para selecionar</p>}
-            </label>
-            
-            <input id="file-upload" type="file" className="hidden" accept=".gcode,.gco" onChange={handleFileChange} />
-            
-            {/* Visualização do arquivo selecionado */}
-            {selectedFile && (
-              <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
-                <div className="flex items-center gap-2 truncate">
-                   <FaFileCode className="text-farm-orange flex-shrink-0" />
-                   <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
-                </div>
-                <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
-              </div>
-            )}
-            
-            <button 
-              onClick={handleUpload} 
-              disabled={!selectedFile} 
-              className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02]"
-            >
-              Carregar G-Code
-            </button>
-            
-            {uploadMessage && <p className="text-center mt-3 font-bold text-farm-orange text-sm animate-pulse">{uploadMessage}</p>}
-          </Card>
-          
-          {/* Card 4 : Impressoras Ativas */}
-          
-          {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
-
-              {activePrinters.map(p => (
-                <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                  <span className="truncate flex-1" title={p.name}>
-                    {p.name || 'Impressora Sem Nome'}
-                  </span>
-                </li>
-              ))} */}
-
-          <Card className="border-t-4 border-t-green-500">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
-                <FaCog className="animate-spin" /> Imprimindo
-              </h3>
-              <span className="text-3xl font-bold">{activePrinters.length}</span>
-            </div>
-            <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
-              {activePrinters.map(p => (
-                <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
-                  <div className="flex flex-col truncate pr-2">
-                    <span className="font-bold text-white truncate">{p.name}</span>
-                    <span className="text-xs text-farm-medium-blue truncate flex items-center gap-1">
-                      <FaFileCode size={10} /> {p.jobName}
-                    </span>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setSelectedPrinterForMonitor(p)}
-                    className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
-                    title="Monitorar Câmera e Controles"
-                  >
-                    <FaEye />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Card 5: Impressoras Ociosas */}
-          <Card className="border-t-4 border-t-farm-medium-blue">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
-                <FaCheckCircle /> Ociosas
-              </h3>
-              <span className="text-3xl font-bold">{idlePrinters.length}</span>
-            </div>
-            
-            <ul className="space-y-2 max-h-40 overflow-y-auto">
-              {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
-              
-              {idlePrinters.map(p => (
-                <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
-                  <span className="truncate flex-1" title={p.name}>
-                    {p.name || 'Sem Nome'}
-                  </span>
-                  
-                  <div className="flex items-center gap-2 ml-2">
-
-                    {/* BOTÃO DE IMPRIMIR */}
-                    <button 
-                      onClick={() => handleOpenPrintModal(p)}
-                      className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
-                      title="Imprimir nesta impressora"
-                    >
-                      <FaPlay size={10} />
-                    </button>
-
-                    <button 
-                      onClick={() => setSelectedPrinterForMonitor(p)}
-                      className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
-                      title="Monitorar Câmera e Controles"
-                    >
-                      <FaEye />
-                    </button>
-
-                  </div>
-
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Card 6: Impressoras Desconectadas */}
-          <Card className="border-t-4 border-t-red-500">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
-                <FaExclamationTriangle /> Desconectadas
-              </h3>
-              <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
-            </div>
-            <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
-              {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
-
-              {disconnectedPrinters.map(p => (
-                <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                  <span className="truncate flex-1" title={p.name}>
-                    {p.name || 'Impressora Sem Nome'}
-                  </span>
-                </li>
-              ))}
-
-            </ul>
-          </Card>
-
-        </main>
       </div>
+
     </>
+    
   );
 }
 
