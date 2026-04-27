@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AddPrinterModal from './components/AddPrinterModal'; // <-- Importa o modal de criar uma impressora
 import axios from 'axios'; // Para o upload e API
 
@@ -12,12 +12,13 @@ import ChangePassModal from './components/ChangePassModal';
 import AdminUsersModal from './components/AdminUsersModal';
 
 import Footer from './components/Footer';
+import io from 'socket.io-client'; // Importa o cliente socket
 
 // Ícones (Instale com: npm install react-icons)
 import { 
   FaPrint, FaList, FaPlus, FaUpload, FaFileCode, FaTrash, FaCopy, 
   FaCheckCircle, FaCog, FaExclamationTriangle, FaPlay, FaEye,
-  FaUserCircle, FaKey, FaUsersCog, FaSignOutAlt 
+  FaUserCircle, FaKey, FaUsersCog, FaSignOutAlt, FaVideoSlash 
 } from 'react-icons/fa';
 
 // Logo
@@ -35,8 +36,9 @@ export const API_BASE_URL = process.env.NODE_ENV === 'development'
 // Configure o Axios para usar essa base automaticamente
 axios.defaults.baseURL = API_BASE_URL;
 
-const Card = ({ children }) => (
-  <div className="bg-farm-dark-blue/80 p-6 rounded-xl border border-farm-medium-grey/50 backdrop-blur-lg ">
+
+const Card = ({ children, className = "" }) => (
+  <div className={`backdrop-blur-lg border border-gray-800 rounded-xl p-4 shadow-xl ${className}`}>
     {children}
   </div>
 );
@@ -46,7 +48,105 @@ const CardTitle = ({ icon, title }) => (
     {icon} {title}
   </h2>
 );
-// ----------------------------------------
+// ---------------------------------------- border border-farm-medium-grey/50 bg-farm-dark-blue/50
+
+
+
+const CameraFeed = React.memo(({ printer }) => {
+
+  // Estado para a imagem da câmera
+    const [imageSrc, setImageSrc] = useState(null);
+    const [isConnected, setIsConnected] = useState(false);
+    
+    // Refs para gerenciar o socket e URLs de objeto sem causar re-renders
+    const socketRef = useRef(null);
+    const lastUrlRef = useRef(null);
+  
+    const [moveStep, setMoveStep] = useState(10); // Passo de movimentação (1, 10, 100mm)
+    const terminalEndRef = useRef(null); // Referência para o scroll do terminal
+
+  useEffect(() => {
+    
+    // Criamos a instância do socket
+    const socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      upgrade: false
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log("Frontend conectado ao Socket!");
+      setIsConnected(true);
+      
+      if(printer.token) {
+        socket.emit('join_stream', { token: printer.token });
+      }
+    });
+
+    socket.on('render_frame', (data) => {
+
+      const webcamUrl = `${API_BASE_URL}/api/proxy/webcam/${printer.token}`;
+      
+    // Se o dado vier como string Base64 (recomendado para fluidez)
+      if (typeof data.image === 'string') {
+          setImageSrc(`data:image/jpeg;base64,${data.image}`);
+      } 
+      // Caso você prefira manter o envio como binário (Blob)
+      else {
+          try {
+              const blob = new Blob([data.image], { type: 'image/jpeg' });
+              const url = URL.createObjectURL(blob);
+              setImageSrc(url);
+              if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+              lastUrlRef.current = url;
+          } catch (err) {
+              console.error("Erro ao processar frame binário:", err);
+          }
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log("Socket desconectado");
+      setIsConnected(false);
+      setImageSrc(null);
+    });
+
+    // LIMPEZA: Só ocorre quando o modal fecha ou o token muda
+    return () => {
+      if (socket) {
+        socket.emit('leave_stream', { token: printer.token });
+        socket.disconnect();
+      }
+      if (lastUrlRef.current) {
+        URL.revokeObjectURL(lastUrlRef.current);
+      }
+    };
+    // REMOVIDO 'isConnected' daqui para evitar o loop infinito!
+  }, [printer.token]);
+
+  return (
+    <div className="aspect-video bg-black rounded flex items-center justify-center overflow-hidden border border-white/10 relative">
+      {imageSrc ? (
+        <img 
+          src={imageSrc} 
+          alt="Stream Ao Vivo" 
+          className="w-full h-full object-contain"
+            />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-farm-medium-grey/50 animate-pulse">
+            <FaVideoSlash size={40} />
+            <p className="mt-2 text-sm">Aguardando vídeo da impressora...</p>
+            <p className="text-xs text-farm-medium-grey/30">O plugin deve iniciar o envio em instantes</p>
+          </div>
+      )}
+    </div>
+
+    
+
+
+  );
+});
+
 
 
 function App() {
@@ -72,10 +172,15 @@ function App() {
   const [showFileModal, setShowFileModal] = useState(false);
   const [selectedPrinterForPrint, setSelectedPrinterForPrint] = useState(null);
   const [selectedPrinterForMonitor, setSelectedPrinterForMonitor] = useState(null);
+  
 
   // Estados para os novos modais de usuário
   const [showChangePassModal, setShowChangePassModal] = useState(false);
   const [showAdminUsersModal, setShowAdminUsersModal] = useState(false);
+
+
+  // Estado para controlar qual aba está ativa (Dashboard ou Monitoramento)
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' ou 'monitor'
 
   // --- LÓGICA DE DADOS ---
 
@@ -432,6 +537,8 @@ function App() {
     }
   };
 
+  
+
   if (authLoading) return <div className="h-screen bg-farm-dark-blue flex items-center justify-center text-white">Carregando...</div>;
 
   if (!isLoggedIn) {
@@ -581,204 +688,196 @@ function App() {
 
             </header>
 
+
+            {/* Menu de Abas */}
+            <div className="flex gap-10 mb-10 border-b border-farm-orange/60 px-6">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`pb-2 text-lg font-bold transition-all ${
+                  activeTab === 'dashboard' 
+                  ? 'border-b-2 border-orange-500 text-orange-500' 
+                  : 'text-farm-light-grey/50 hover:text-white'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('monitoramento')}
+                className={`pb-2 text-lg font-bold transition-all ${
+                  activeTab === 'monitoramento' 
+                  ? 'border-b-2 border-orange-500 text-orange-500' 
+                  : 'text-farm-light-grey/50 hover:text-white'
+                }`}
+              >
+                Monitoramento
+              </button>
+            </div>
+            
+
             {/* --- TELA PRINCIPAL (GRID COM 3 COLUNAS) --- */}
-            <main className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <main>
+
+              <div>
+
+              {activeTab === 'dashboard' ? (
+
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               
-              {/* Card 1: Impressoras Conectadas */}
-              <Card>
-                <CardTitle icon={<FaPrint />} title="Impressoras Cadastradas" />
-                <ul className="space-y-3 max-h-96 overflow-y-auto">
-                  
-                  {printers.length === 0 && <p className="text-farm-medium-grey">Nenhuma impressora registrada.</p>}
-                  
-                  {printers.map(printer => (
-                    <li key={printer.id} className="flex justify-between items-center py-2 border-b border-dashed border-farm-medium-grey">
-                      
-                      {/* Lado Esquerdo: Nome */}
-                      <span className='truncate'>{printer.name || 'Impressora Sem Nome'}</span>
-                      
-                      {/* Lado Direito: Wrapper para Status e Botões */}
-                      <div className="flex items-center gap-4 flex-shrink-0"> {/* Aumentei o 'gap-3' para 'gap-4' */}
+                {/* Card 1: Impressoras Conectadas */}
+                <Card>
+                  <CardTitle icon={<FaPrint />} title="Impressoras Cadastradas" />
+                  <ul className="space-y-3 max-h-96 overflow-y-auto">
+                    
+                    {printers.length === 0 && <p className="text-farm-medium-grey">Nenhuma impressora registrada.</p>}
+                    
+                    {printers.map(printer => (
+                      <li key={printer.id} className="flex justify-between items-center py-2 border-b border-dashed border-farm-medium-grey">
                         
-                        {/* Status (Token) */}
-                        <span className={`font-mono text-xs text-farm-medium-blue`}>
-                          ...{printer.token.slice(-6)}
-                        </span>
+                        {/* Lado Esquerdo: Nome */}
+                        <span className='truncate'>{printer.name || 'Impressora Sem Nome'}</span>
                         
-                        {/* --- O NOVO BOTÃO DE COPIAR --- */}
+                        {/* Lado Direito: Wrapper para Status e Botões */}
+                        <div className="flex items-center gap-4 flex-shrink-0"> {/* Aumentei o 'gap-3' para 'gap-4' */}
+                          
+                          {/* Status (Token) */}
+                          <span className={`font-mono text-xs text-farm-medium-blue`}>
+                            ...{printer.token.slice(-6)}
+                          </span>
+                          
+                          {/* --- O NOVO BOTÃO DE COPIAR --- */}
+                          <button 
+                            onClick={() => handleCopyToken(printer.token)}
+                            className="text-farm-medium-blue hover:text-farm-light-grey transition-colors"
+                            title="Copiar Token Inteiro"
+                          >
+                            <FaCopy />
+                          </button>
+                          
+                          {/* Botão de Apagar (Já existente) */}
+                          <button 
+                            onClick={() => handleDeletePrinter(printer.id, printer.name)}
+                            className="text-red-500 hover:text-red-400 transition-colors"
+                            title="Excluir Impressora"
+                          >
+                            <FaTrash />
+                          </button>
+
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+
+                
+                
+                {/* Card 2: Fila de Impressão */}
+                <Card>
+                  <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
+                  <ul className="space-y-3 max-h-96 overflow-y-auto">
+                    {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
+                    
+                    {files.map((filename, index) => (
+                      <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
+                        <div className="flex items-center gap-3 truncate">
+                          <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
+                          <span className="truncate" title={filename}>{filename}</span>
+                        </div>
+                        
+                        {/* Botão de Excluir Arquivo */}
                         <button 
-                          onClick={() => handleCopyToken(printer.token)}
-                          className="text-farm-medium-blue hover:text-farm-light-grey transition-colors"
-                          title="Copiar Token Inteiro"
-                        >
-                          <FaCopy />
-                        </button>
-                        
-                        {/* Botão de Apagar (Já existente) */}
-                        <button 
-                          onClick={() => handleDeletePrinter(printer.id, printer.name)}
-                          className="text-red-500 hover:text-red-400 transition-colors"
-                          title="Excluir Impressora"
+                          onClick={() => handleDeleteFile(filename)}
+                          className="text-red-500 hover:text-red-300 p-2 transition-colors"
+                          title="Apagar Arquivo"
                         >
                           <FaTrash />
                         </button>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
 
+                {/* Card 3: Upload de G-code */}
+                <Card>
+                  <CardTitle icon={<FaUpload />} title="Upload de G-code" />
+                  
+                  <label 
+                    htmlFor="file-upload" 
+                    // Adicionamos os eventos aqui
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`
+                      flex flex-col items-center justify-center w-full h-48 px-4 
+                      border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                      ${isDragging 
+                        ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
+                        : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
+                      }
+                    `}
+                  >
+                    <FaUpload className={`text-4xl mb-2 transition-colors ${isDragging ? 'text-farm-orange' : 'text-farm-medium-grey'}`} />
+                    
+                    <p className="text-farm-medium-grey font-medium">
+                      {isDragging ? "Solte o arquivo aqui!" : "Arraste um G-code"}
+                    </p>
+                    
+                    {!isDragging && <p className="text-xs text-farm-medium-grey mt-1">ou clique para selecionar</p>}
+                  </label>
+                  
+                  <input id="file-upload" type="file" className="hidden" accept=".gcode,.gco" onChange={handleFileChange} />
+                  
+                  {/* Visualização do arquivo selecionado */}
+                  {selectedFile && (
+                    <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
+                      <div className="flex items-center gap-2 truncate">
+                        <FaFileCode className="text-farm-orange flex-shrink-0" />
+                        <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-
-              
-              
-              {/* Card 2: Fila de Impressão */}
-              <Card>
-                <CardTitle icon={<FaFileCode />} title="Arquivos Carregados" />
-                <ul className="space-y-3 max-h-96 overflow-y-auto">
-                  {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
-                  
-                  {files.map((filename, index) => (
-                    <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
-                      <div className="flex items-center gap-3 truncate">
-                        <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
-                        <span className="truncate" title={filename}>{filename}</span>
-                      </div>
-                      
-                      {/* Botão de Excluir Arquivo */}
-                      <button 
-                        onClick={() => handleDeleteFile(filename)}
-                        className="text-red-500 hover:text-red-300 p-2 transition-colors"
-                        title="Apagar Arquivo"
-                      >
-                        <FaTrash />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-
-              {/* Card 3: Upload de G-code */}
-              <Card>
-                <CardTitle icon={<FaUpload />} title="Upload de G-code" />
-                
-                <label 
-                  htmlFor="file-upload" 
-                  // Adicionamos os eventos aqui
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`
-                    flex flex-col items-center justify-center w-full h-48 px-4 
-                    border-2 border-dashed rounded-lg cursor-pointer transition-colors
-                    ${isDragging 
-                      ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
-                      : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
-                    }
-                  `}
-                >
-                  <FaUpload className={`text-4xl mb-2 transition-colors ${isDragging ? 'text-farm-orange' : 'text-farm-medium-grey'}`} />
-                  
-                  <p className="text-farm-medium-grey font-medium">
-                    {isDragging ? "Solte o arquivo aqui!" : "Arraste um G-code"}
-                  </p>
-                  
-                  {!isDragging && <p className="text-xs text-farm-medium-grey mt-1">ou clique para selecionar</p>}
-                </label>
-                
-                <input id="file-upload" type="file" className="hidden" accept=".gcode,.gco" onChange={handleFileChange} />
-                
-                {/* Visualização do arquivo selecionado */}
-                {selectedFile && (
-                  <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
-                    <div className="flex items-center gap-2 truncate">
-                      <FaFileCode className="text-farm-orange flex-shrink-0" />
-                      <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
+                      <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
                     </div>
-                    <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
-                  </div>
-                )}
-                
-                <button 
-                  onClick={handleUpload} 
-                  disabled={!selectedFile} 
-                  className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02]"
-                >
-                  Carregar G-Code
-                </button>
-                
-                {uploadMessage && <p className="text-center mt-3 font-bold text-farm-orange text-sm animate-pulse">{uploadMessage}</p>}
-              </Card>
-              
-              {/* Card 4 : Impressoras Ativas */}
-              
-              {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
-
-                  {activePrinters.map(p => (
-                    <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                      <span className="truncate flex-1" title={p.name}>
-                        {p.name || 'Impressora Sem Nome'}
-                      </span>
-                    </li>
-                  ))} */}
-
-              <Card className="border-t-4 border-t-green-500">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
-                    <FaCog className="animate-spin" /> Imprimindo
-                  </h3>
-                  <span className="text-3xl font-bold">{activePrinters.length}</span>
-                </div>
-                <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
-                  {activePrinters.map(p => (
-                    <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
-                      <div className="flex flex-col truncate pr-2">
-                        <span className="font-bold text-white truncate">{p.name}</span>
-                        <span className="text-xs text-farm-medium-blue truncate flex items-center gap-1">
-                          <FaFileCode size={10} /> {p.jobName}
-                        </span>
-                      </div>
-                      
-                      <button 
-                        onClick={() => setSelectedPrinterForMonitor(p)}
-                        className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
-                        title="Monitorar Câmera e Controles"
-                      >
-                        <FaEye />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-
-              {/* Card 5: Impressoras Ociosas */}
-              <Card className="border-t-4 border-t-farm-medium-blue">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
-                    <FaCheckCircle /> Ociosas
-                  </h3>
-                  <span className="text-3xl font-bold">{idlePrinters.length}</span>
-                </div>
-                
-                <ul className="space-y-2 max-h-40 overflow-y-auto">
-                  {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
+                  )}
                   
-                  {idlePrinters.map(p => (
-                    <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
-                      <span className="truncate flex-1" title={p.name}>
-                        {p.name || 'Sem Nome'}
-                      </span>
-                      
-                      <div className="flex items-center gap-2 ml-2">
+                  <button 
+                    onClick={handleUpload} 
+                    disabled={!selectedFile} 
+                    className="w-full mt-4 py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02]"
+                  >
+                    Carregar G-Code
+                  </button>
+                  
+                  {uploadMessage && <p className="text-center mt-3 font-bold text-farm-orange text-sm animate-pulse">{uploadMessage}</p>}
+                </Card>
+                
+                {/* Card 4 : Impressoras Ativas */}
+                
+                {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
 
-                        {/* BOTÃO DE IMPRIMIR */}
-                        <button 
-                          onClick={() => handleOpenPrintModal(p)}
-                          className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
-                          title="Imprimir nesta impressora"
-                        >
-                          <FaPlay size={10} />
-                        </button>
+                    {activePrinters.map(p => (
+                      <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                        <span className="truncate flex-1" title={p.name}>
+                          {p.name || 'Impressora Sem Nome'}
+                        </span>
+                      </li>
+                    ))} */}
 
+                <Card className="border-t-4 border-t-green-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
+                      <FaCog className="animate-spin" /> Imprimindo
+                    </h3>
+                    <span className="text-3xl font-bold">{activePrinters.length}</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
+                    {activePrinters.map(p => (
+                      <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
+                        <div className="flex flex-col truncate pr-2">
+                          <span className="font-bold text-white truncate">{p.name}</span>
+                          <span className="text-xs text-farm-medium-blue truncate flex items-center gap-1">
+                            <FaFileCode size={10} /> {p.jobName}
+                          </span>
+                        </div>
+                        
                         <button 
                           onClick={() => setSelectedPrinterForMonitor(p)}
                           className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
@@ -786,35 +885,142 @@ function App() {
                         >
                           <FaEye />
                         </button>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+
+                {/* Card 5: Impressoras Ociosas */}
+                <Card className="border-t-4 border-t-farm-medium-blue">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
+                      <FaCheckCircle /> Ociosas
+                    </h3>
+                    <span className="text-3xl font-bold">{idlePrinters.length}</span>
+                  </div>
+                  
+                  <ul className="space-y-2 max-h-40 overflow-y-auto">
+                    {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
+                    
+                    {idlePrinters.map(p => (
+                      <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
+                        <span className="truncate flex-1" title={p.name}>
+                          {p.name || 'Sem Nome'}
+                        </span>
+                        
+                        <div className="flex items-center gap-2 ml-2">
+
+                          {/* BOTÃO DE IMPRIMIR */}
+                          <button 
+                            onClick={() => handleOpenPrintModal(p)}
+                            className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                            title="Imprimir nesta impressora"
+                          >
+                            <FaPlay size={10} />
+                          </button>
+
+                          <button 
+                            onClick={() => setSelectedPrinterForMonitor(p)}
+                            className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                            title="Monitorar Câmera e Controles"
+                          >
+                            <FaEye />
+                          </button>
+
+                        </div>
+
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+
+                {/* Card 6: Impressoras Desconectadas */}
+                <Card className="border-t-4 border-t-red-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
+                      <FaExclamationTriangle /> Desconectadas
+                    </h3>
+                    <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
+                  </div>
+                  <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+                    {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
+
+                    {disconnectedPrinters.map(p => (
+                      <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
+                        <span className="truncate flex-1" title={p.name}>
+                          {p.name || 'Impressora Sem Nome'}
+                        </span>
+                      </li>
+                    ))}
+
+                  </ul>
+                </Card>
+
+              </div>
+              
+
+              ):(
+
+
+                  /* --- NOVO CONTEÚDO DO MONITORAMENTO --- */
+                      <div  className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+                        {activePrinters.map(printer => (
+
+                          <Card key={printer.id} className="overflow-hidden !border-2 !border-green-500 shadow-lg shadow-green-500/20">
+                            <div className="flex justify-between items-center mb-2 p-2">
+                              <h3 className="font-bold text-green-400 flex items-center gap-2">
+                                <FaCog className="animate-spin" /> {printer.name} - Imprimindo
+                              </h3>
+                              <span className="text-xs text-red-500 ml-2 border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse px-1">
+                                 ● Ao Vivo 
+                              </span>
+                            </div>
+
+                            {/* Componente que gerencia o Socket de vídeo para cada card */}
+                            <CameraFeed printer={printer} />
+                          </Card>
+
+                        ))}
+
+                        {idlePrinters.map(printer => (
+                          
+                          <Card key={printer.id} className="overflow-hidden !border-2 !border-blue-500 shadow-lg shadow-blue-500/20">
+                            <div className="flex justify-between items-center mb-2 p-2">
+                              <h3 className="font-bold text-blue-400 flex items-center gap-2">
+                                <FaPrint className="text-xs" /> {printer.name} - Ociosa
+                              </h3>
+                              <span className="text-xs text-red-500 ml-2 border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse px-1">
+                                 ● Ao Vivo 
+                              </span>
+                            </div>
+
+                            {/* Componente que gerencia o Socket de vídeo para cada card */}
+                            <CameraFeed printer={printer} />
+                          </Card>
+
+                        ))}
+
+                        {printers.filter(p => p.last_status !== 'disconnected').length === 0 && (
+                          <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-xl">
+                            <FaVideoSlash className="mx-auto text-4xl text-gray-700 mb-4" />
+                            <p className="text-farm-medium-grey text-lg">Nenhuma impressora online para monitorar.</p>
+                          </div>
+                        )}
+
+                        
 
                       </div>
 
-                    </li>
-                  ))}
-                </ul>
-              </Card>
 
-              {/* Card 6: Impressoras Desconectadas */}
-              <Card className="border-t-4 border-t-red-500">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
-                    <FaExclamationTriangle /> Desconectadas
-                  </h3>
-                  <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
-                </div>
-                <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
-                  {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
 
-                  {disconnectedPrinters.map(p => (
-                    <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                      <span className="truncate flex-1" title={p.name}>
-                        {p.name || 'Impressora Sem Nome'}
-                      </span>
-                    </li>
-                  ))}
+                  )
 
-                </ul>
-              </Card>
+                }
+
+              </div>
+
+
 
             </main>
 
