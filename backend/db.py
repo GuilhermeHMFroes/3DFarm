@@ -74,7 +74,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
+        role TEXT NOT NULL CHECK (role IN ('admin', 'user', 'monitor')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -135,7 +135,7 @@ def get_admin_count():
     conn.close()
     return count['total']
 
-def create_user(username, hashed_password, role='user'):
+def create_user(username, hashed_password, role):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(

@@ -21,6 +21,8 @@ import {
   FaUserCircle, FaKey, FaUsersCog, FaSignOutAlt, FaVideoSlash 
 } from 'react-icons/fa';
 
+// Biblioteca dos ícones do react:  https://react-icons.github.io/react-icons/icons/fa/
+
 // Logo
 import logoIcon from './assets/icon-3dfarm.png'; 
 import logoPrincipal from './assets/logoTrasnparente.png'; 
@@ -239,6 +241,15 @@ function App() {
           if (token && savedUser) {
             setIsLoggedIn(true);
             setUser(JSON.parse(savedUser));
+
+            const parsedUser = JSON.parse(savedUser);
+
+            // Se a role for monitor, define a aba ativa como monitoramento
+            if (parsedUser.role === 'monitor') {
+              setActiveTab('monitor');
+            }
+
+
             // Configura o axios para enviar o token em todas as chamadas futuras
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           }
@@ -265,6 +276,8 @@ function App() {
     return () => clearInterval(interval);
   }, [fetchPrinters, fetchFiles]);
 
+  
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -290,6 +303,16 @@ function App() {
     delete axios.defaults.headers.common['Authorization'];
     setIsLoggedIn(false);
     window.location.reload(); // Limpa todos os estados
+  };
+
+  const handleTabChange = (tabName) => {
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    
+    if (savedUser?.role === 'monitor') {
+      setActiveTab('monitor'); // Força a permanência
+    } else {
+      setActiveTab(tabName); // Permite a troca para outros usuários
+    }
   };
 
   
@@ -652,12 +675,14 @@ function App() {
                   </button>
                 </a>
 
-                <button 
-                  className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                  onClick={() => setShowModal(true)} // Abre o modal de adicionar impressora
-                >
-                  <FaPlus /> Adicionar Impressora
-                </button>
+                {user.role === 'admin' || user.role === 'user' && (
+                  <button 
+                    className="flex items-center gap-2 py-2 px-4 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    onClick={() => setShowModal(true)} // Abre o modal de adicionar impressora
+                  >
+                    <FaPlus /> Adicionar Impressora
+                  </button>
+                )}
 
                 {/* BOTÃO DE PERFIL */}
                 <div className="relative group z-[100]">
@@ -675,7 +700,12 @@ function App() {
                     </button>
                     {user.role === 'admin' && (
                       <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
-                        <FaUsersCog /> Gerir Utilizadores
+                        <FaUsersCog /> Gerenciar Usuários
+                      </button>
+                    )}
+                    {user.role === 'admin' && (
+                      <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                        <FaCog/> Configurações 
                       </button>
                     )}
                     <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
@@ -690,34 +720,48 @@ function App() {
 
 
             {/* Menu de Abas */}
-            <div className="flex gap-10 mb-10 border-b border-farm-orange/60 px-6">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`pb-2 text-lg font-bold transition-all ${
-                  activeTab === 'dashboard' 
-                  ? 'border-b-2 border-orange-500 text-orange-500' 
-                  : 'text-farm-light-grey/50 hover:text-white'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab('monitoramento')}
-                className={`pb-2 text-lg font-bold transition-all ${
-                  activeTab === 'monitoramento' 
-                  ? 'border-b-2 border-orange-500 text-orange-500' 
-                  : 'text-farm-light-grey/50 hover:text-white'
-                }`}
-              >
-                Monitoramento
-              </button>
-            </div>
+
+            {user.role === 'admin' || user.role === 'user' && (
+              <div className="flex gap-10 mb-10 border-b border-farm-orange/60 px-6">
+              
+              
+                    
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`pb-2 text-lg font-bold transition-all ${
+                    activeTab === 'dashboard' 
+                    ? 'border-b-2 border-orange-500 text-orange-500' 
+                    : 'text-farm-light-grey/50 hover:text-white'
+                  }`}
+                >
+                  Dashboard
+                </button>
+
+              
+
+                <button
+                  onClick={() => setActiveTab('monitoramento')}
+                  className={`pb-2 text-lg font-bold transition-all ${
+                    activeTab === 'monitoramento' 
+                    ? 'border-b-2 border-orange-500 text-orange-500' 
+                    : 'text-farm-light-grey/50 hover:text-white'
+                  }`}
+                >
+                  Monitoramento
+                </button>
+                
+              </div>
+
+            )}
             
 
             {/* --- TELA PRINCIPAL (GRID COM 3 COLUNAS) --- */}
             <main>
 
+
               <div>
+
+              
 
               {activeTab === 'dashboard' ? (
 

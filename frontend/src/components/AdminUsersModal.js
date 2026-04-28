@@ -82,6 +82,7 @@ const AdminUsersModal = ({ onClose }) => {
             >
               <option value="user">Nível: Usuário Comum</option>
               <option value="admin">Nível: Administrador</option>
+              <option value="monitor">Nível: Monitor</option>
             </select>
             <button 
               type="submit" disabled={loading}

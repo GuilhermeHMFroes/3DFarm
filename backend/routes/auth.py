@@ -114,5 +114,6 @@ def auth_register_user():
         return jsonify({"message": "Usuário já existe"}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    print(f"Creating user: {username} with role: {role}")  # Log para debug
     db.create_user(username, hashed_password, role)
     return jsonify({"success": True, "message": "Usuário criado com sucesso!"})
