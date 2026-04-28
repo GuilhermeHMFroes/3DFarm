@@ -117,3 +117,8 @@ def auth_register_user():
     print(f"Creating user: {username} with role: {role}")  # Log para debug
     db.create_user(username, hashed_password, role)
     return jsonify({"success": True, "message": "Usuário criado com sucesso!"})
+
+@auth_bp.route('/verify', methods=['GET'])
+@jwt_required()
+def verify_token():
+    return {"success": True}, 200

@@ -11,6 +11,7 @@ from pathlib import Path
 import os
 
 from utils import key_file # Garante a chave criptográfica para JWT
+from datetime import timedelta
 
 # --- CONFIGURAÇÃO DE CAMINHOS DINÂMICOS ---
 BASE_DIR = Path(__file__).resolve().parent
@@ -57,6 +58,10 @@ def create_app():
     
     # Configurações do App
     app.config["JWT_SECRET_KEY"] = key_file()
+
+    #configuração tempo para o jwt
+    #app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7) # deixa o token válido por 7 dias
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False # token nunca expira
 
     
     #CORS(app)

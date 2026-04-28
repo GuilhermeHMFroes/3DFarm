@@ -153,6 +153,9 @@ const CameraFeed = React.memo(({ printer }) => {
 
 function App() {
 
+  const isFirstLoad = useRef(true);
+  const [loading, setLoading] = useState(true);
+
   // --- Estados de Autenticação ---
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState({ username: '', role: '' });
@@ -188,6 +191,13 @@ function App() {
 
   // useCallback "memoriza" a função para que ela não seja recriada
   const fetchPrinters = useCallback(() => {
+
+
+    if (isFirstLoad.current) {
+      setLoading(true);
+    }
+
+
     // Usando o endpoint do seu app.py
     axios.get('/printers/lists')
       .then(response => {
@@ -199,9 +209,24 @@ function App() {
           setPrinters(allPrinters);
 
           categorizePrinters(allPrinters);
+
+
+          // Após o primeiro sucesso, marcamos como falso para nunca mais mostrar o loading
+          if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            setLoading(false);
+          }
+
+
         }
       })
-      .catch(error => console.error("Erro ao buscar impressoras:", error));
+      .catch(error => {
+        console.error("Erro ao buscar impressoras:", error);
+      })
+      .finally(() => {
+        setTimeout(() => setLoading(false), 1000); // 2. Termina o carregamento (sucesso ou erro)
+      });
+    
   }, []); // Array vazio = a função nunca muda
 
   const fetchQueue = useCallback(() => {
@@ -216,13 +241,40 @@ function App() {
 
   // Lista os arquivos G-code Carregados
   const fetchFiles = useCallback(() => {
+
+
+    if (isFirstLoad.current) {
+      setLoading(true);
+    }
+
+
+
     axios.get('/dashboard/files')
       .then(response => {
         if (response.data.success) {
           setFiles(response.data.files);
+
+
+          // Após o primeiro sucesso, marcamos como falso para nunca mais mostrar o loading
+          if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            setLoading(false);
+          }
+
+
+
+
         }
       })
-      .catch(error => console.error("Erro ao buscar arquivos:", error));
+      .catch(error => {
+        console.error("Erro ao buscar arquivos:", error);
+      })
+      .finally(() => {
+        setTimeout(() => setLoading(false), 1000); // 2. Termina o carregamento (sucesso ou erro)
+      });
+
+
+
   }, []);
 
   useEffect(() => {
@@ -238,20 +290,39 @@ function App() {
           // 2. Se não precisa de setup, verifica se tem token no localStorage
           const token = localStorage.getItem('token');
           const savedUser = localStorage.getItem('user');
+
           if (token && savedUser) {
-            setIsLoggedIn(true);
-            setUser(JSON.parse(savedUser));
-
-            const parsedUser = JSON.parse(savedUser);
-
-            // Se a role for monitor, define a aba ativa como monitoramento
-            if (parsedUser.role === 'monitor') {
-              setActiveTab('monitor');
-            }
-
 
             // Configura o axios para enviar o token em todas as chamadas futuras
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            try {
+
+              await axios.get('/auth/verify');
+
+              setIsLoggedIn(true);
+              setUser(JSON.parse(savedUser));
+
+              const parsedUser = JSON.parse(savedUser);
+
+              // Se a role for monitor, define a aba ativa como monitoramento
+              if (parsedUser.role === 'monitor') {
+                setActiveTab('monitor');
+              }
+
+              fetchPrinters();
+              fetchFiles();
+
+            }catch (verifyErr) {
+              // Se cair aqui, o token existe mas é inválido ou expirou
+              console.warn("Token expirado, deslogando...");
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              setIsLoggedIn(false);
+            }
+
+
+
           }
         }
       } catch (err) {
@@ -291,10 +362,14 @@ function App() {
         setUser({ username, role });
         setIsLoggedIn(true);
         setSetupRequired(false); // Caso tenha sido o primeiro cadastro
+
+        fetchPrinters();
+        fetchFiles();
+
       }
     } catch (err) {
       alert(err.response?.data?.message || "Erro ao entrar");
-    }
+    } 
   };
 
   const handleLogout = () => {
@@ -609,42 +684,61 @@ function App() {
 
   return (
     <>
-      {/* Modal */}
 
-      {showChangePassModal && (
-        <ChangePassModal 
-          onClose={() => setShowChangePassModal(false)} />
-      )}
+
       
-      {showAdminUsersModal && (
-        <AdminUsersModal 
-        onClose={() => setShowAdminUsersModal(false)} />
-      )}
 
-      {/* O Modal (agora controlado pelo state 'showModal') */}
-      {showModal && (
-        <AddPrinterModal
-          onClose={() => setShowModal(false)}
-          onPrinterAdded={handlePrinterAdded}
-        />
-      )}
 
-      {/* Modal de Seleção de Arquivo */}
-      {showFileModal && selectedPrinterForPrint && (
-        <SelectFileModal 
-          printerName={selectedPrinterForPrint.name}
-          onClose={() => setShowFileModal(false)}
-          onSelectFile={handleStartPrint}
-        />
-      )}
 
-      {/* Modal de monitoramento de impressora */}
-      {selectedPrinterForMonitor && (
-        <MonitorModal 
-          printer={selectedPrinterForMonitor} 
-          onClose={() => setSelectedPrinterForMonitor(null)} 
-        />
-      )}
+      <nav>
+
+        {showChangePassModal && (
+          <ChangePassModal 
+            onClose={() => setShowChangePassModal(false)} />
+        )}
+        
+        {showAdminUsersModal && (
+          <AdminUsersModal 
+          onClose={() => setShowAdminUsersModal(false)} />
+        )}
+
+        {/* O Modal (agora controlado pelo state 'showModal') */}
+        {showModal && (
+          <AddPrinterModal
+            onClose={() => setShowModal(false)}
+            onPrinterAdded={handlePrinterAdded}
+          />
+        )}
+
+        {/* Modal de Seleção de Arquivo */}
+        {showFileModal && selectedPrinterForPrint && (
+          <SelectFileModal 
+            printerName={selectedPrinterForPrint.name}
+            onClose={() => setShowFileModal(false)}
+            onSelectFile={handleStartPrint}
+          />
+        )}
+
+        {/* Modal de monitoramento de impressora */}
+        {selectedPrinterForMonitor && (
+          <MonitorModal 
+            printer={selectedPrinterForMonitor} 
+            onClose={() => setSelectedPrinterForMonitor(null)} 
+          />
+        )}
+
+      </nav>
+
+      {/* Se o sistema ainda estiver validando o login ou buscando impressoras */}
+      {(authLoading || loading) && isLoggedIn ? (
+        <div className="h-screen w-full bg-farm-black flex flex-col items-center justify-center text-white">
+          {/* Você pode usar a sua logo aqui para ficar profissional */}
+          <img src={logoIcon} alt="Logo" className="w-16 h-16 mb-4 animate-bounce" />
+          <h2 className="text-xl font-semibold animate-pulse">
+            Carregando dashboard, aguarde alguns instantes...
+          </h2>
+        </div>
+      ) : (
     
       <div className="  flex flex-col min-h-screen">
 
@@ -1065,6 +1159,8 @@ function App() {
         <Footer />
 
       </div>
+
+      )}
 
     </>
     

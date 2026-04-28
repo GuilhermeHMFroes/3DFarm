@@ -17,6 +17,12 @@ api_bp = Blueprint('api', __name__)
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / "uploads"
 
+def valida_token(token):
+    printer = db.get_printer_by_token(token) # Verifique se essa função existe no seu db.py
+    if not printer:
+        return False
+    return printer
+
 @api_bp.route("/generate_token", methods=["POST"])
 def api_generate_token():
 
@@ -45,8 +51,8 @@ def api_status():
     data = request.get_json() or {}
     token = data.get("token")
 
-    if not token:
-        return jsonify({"success": False, "message": "token obrigatório"}), 400
+    if not token or not valida_token(token):
+        return jsonify({"success": False, "message": "Token inválido ou não cadastrado"}), 401
         
     ip = data.get("ip") or request.remote_addr
     
@@ -64,8 +70,9 @@ def api_fila():
 
     token = request.args.get("token")
 
-    if not token:
-        return jsonify({"success": False, "message": "token obrigatório"}), 400
+    if not token or not valida_token(token):
+        # Retorna 401 para que o plugin saiba que deve parar
+        return jsonify({"success": False, "message": "Acesso negado"}), 401
     
     # --- DEBUG ---
     print(f"DEBUG: Impressora com token {token[:5]}... perguntou por trabalho.")

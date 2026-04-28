@@ -2,6 +2,7 @@
 from extensions import socketio
 from flask_socketio import emit, join_room, leave_room
 from flask import request
+import db
 
 # --- ROTAS DE WEBSOCKET (O Túnel Reverso) ---
 
@@ -9,11 +10,22 @@ from flask import request
 @socketio.on('printer_connect')
 def handle_printer_connect(data):
     token = data.get('token')
-    if token:
+
+    # VERIFICAÇÃO: O token existe na base de dados?
+    printer = db.get_printer_by_token(token)
+
+    if token and printer:
         join_room(token)
         # Se este print não aparecer no terminal do servidor, o teste_ws não enviou o evento certo
         print(f"✅ WS: Impressora {token} entrou na sala com sucesso!") 
         emit('server_ack', {'status': 'connected'}, to=token)
+    
+    else:
+        print(f"❌ WS: Tentativa de conexão com TOKEN INVÁLIDO: {token}")
+        # Envia um erro para o plugin e desconecta
+        emit('server_error', {'message': 'Token não autorizado'}, room=request.sid)
+        from flask_socketio import disconnect
+        disconnect()
 
 # 2. SITE (REACT) QUER ASSISTIR
 @socketio.on('join_stream')
