@@ -850,18 +850,8 @@ function App() {
                 </Card>
                 
                 {/* Card 4 : Impressoras Ativas */}
-                
-                {/* {activePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora está imprimindo.</p>}
 
-                    {activePrinters.map(p => (
-                      <li key={p.id} className="truncate border-b border-dashed border-farm-medium-grey">
-                        <span className="truncate flex-1" title={p.name}>
-                          {p.name || 'Impressora Sem Nome'}
-                        </span>
-                      </li>
-                    ))} */}
-
-                <Card className="border-t-4 border-t-green-500">
+                <Card className="border-t-4 border-t-green-500 border-green-500">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
                       <FaCog className="animate-spin" /> Imprimindo
@@ -891,7 +881,7 @@ function App() {
                 </Card>
 
                 {/* Card 5: Impressoras Ociosas */}
-                <Card className="border-t-4 border-t-farm-medium-blue">
+                <Card className="border-t-4 border-t-farm-medium-blue border-farm-medium-blue">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
                       <FaCheckCircle /> Ociosas
@@ -935,7 +925,7 @@ function App() {
                 </Card>
 
                 {/* Card 6: Impressoras Desconectadas */}
-                <Card className="border-t-4 border-t-red-500">
+                <Card className="border-t-4 border-t-red-500 border-red-500">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
                       <FaExclamationTriangle /> Desconectadas
@@ -1002,8 +992,8 @@ function App() {
                         ))}
 
                         {printers.filter(p => p.last_status !== 'disconnected').length === 0 && (
-                          <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-xl">
-                            <FaVideoSlash className="mx-auto text-4xl text-gray-700 mb-4" />
+                          <div className="backdrop-blur-lg col-span-full py-20 text-center border-2 border-gray-800 rounded-xl">
+                            <FaVideoSlash className="mx-auto text-4xl text-white-700 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,255,255,1)]" />
                             <p className="text-farm-medium-grey text-lg">Nenhuma impressora online para monitorar.</p>
                           </div>
                         )}
