@@ -14,6 +14,7 @@ import AdminUsersModal from './components/AdminUsersModal';
 import Footer from './components/Footer';
 import DashboardTab from './components/DashboardTab';
 import MonitoringTab from './components/MonitoringTab';
+import LoadingPage from './components/LoadingPage';
 import Header from './components/Header';
 
 import io from 'socket.io-client'; // Importa o cliente socket
@@ -48,8 +49,8 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
-const CardTitle = ({ icon, title }) => (
-  <h2 className="flex items-center gap-3 text-xl font-bold border-b-2 border-farm-medium-blue pb-3 mb-4 mt-0">
+const CardTitle = ({ icon, title  }) => (
+  <h2 className={'flex items-center gap-3 text-xl font-bold border-b-2 border-farm-medium-blue pb-3 mb-4 mt-0'}>
     {icon} {title}
   </h2>
 );
@@ -728,13 +729,9 @@ function App() {
 
       {/* Se o sistema ainda estiver validando o login ou buscando impressoras */}
       {(authLoading || loading) && isLoggedIn ? (
-        <div className="h-screen w-full bg-farm-black flex flex-col items-center justify-center text-white">
-          {/* Você pode usar a sua logo aqui para ficar profissional */}
-          <img src={logoIcon} alt="Logo" className="w-16 h-16 mb-4 animate-bounce" />
-          <h2 className="text-xl font-semibold animate-pulse">
-            Carregando dashboard, aguarde alguns instantes...
-          </h2>
-        </div>
+        
+        <LoadingPage />
+        
       ) : (
     
       <div className="  flex flex-col min-h-screen">
@@ -774,9 +771,9 @@ function App() {
               
 
                 <button
-                  onClick={() => setActiveTab('monitoramento')}
+                  onClick={() => setActiveTab('monitor')}
                   className={`pb-2 text-lg font-bold transition-all ${
-                    activeTab === 'monitoramento' 
+                    activeTab === 'monitor' 
                     ? 'border-b-2 border-orange-500 text-orange-500' 
                     : 'text-farm-light-grey/50 hover:text-white'
                   }`}
@@ -796,9 +793,10 @@ function App() {
               <div>
 
               
+              
+              {activeTab === 'dashboard' && user?.role !== 'monitor' ? (
 
-              {activeTab === 'dashboard' ? (
-
+                
 
                 <DashboardTab 
                   // Dados (Estados)
@@ -840,6 +838,7 @@ function App() {
                 <MonitoringTab 
                   activePrinters={activePrinters}
                   idlePrinters={idlePrinters}
+                  disconnectedPrinters={disconnectedPrinters}
                   printers={printers}
                   Card={Card}
                   CardTitle={CardTitle}
