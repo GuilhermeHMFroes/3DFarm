@@ -38,7 +38,7 @@ const DashboardTab = ({
                                 {/* --- O NOVO BOTÃO DE COPIAR --- */}
                                 <button 
                                     onClick={() => handleCopyToken(printer.token)}
-                                    className="text-farm-medium-blue hover:text-farm-light-grey transition-colors"
+                                    className="text-farm-medium-blue hover:text-farm-light-grey transition-colors hover:scale-105 hover:shadow-lg"
                                     title="Copiar Token Inteiro"
                                 >
                                     <FaCopy />
@@ -47,7 +47,7 @@ const DashboardTab = ({
                                 {/* Botão de Apagar (Já existente) */}
                                 <button 
                                     onClick={() => handleDeletePrinter(printer.id, printer.name)}
-                                    className="text-red-500 hover:text-red-400 transition-colors"
+                                    className="text-red-500 hover:text-red-400 transition-colors hover:scale-105 hover:shadow-lg"
                                     title="Excluir Impressora"
                                 >
                                     <FaTrash />
@@ -77,7 +77,7 @@ const DashboardTab = ({
                             {/* Botão de Excluir Arquivo */}
                             <button 
                               onClick={() => handleDeleteFile(filename)}
-                              className="text-red-500 hover:text-red-300 p-2 transition-colors"
+                              className="text-red-500 hover:text-red-300 p-2 transition-colors hover:scale-105 hover:shadow-lg"
                               title="Apagar Arquivo"
                             >
                               <FaTrash />
@@ -192,7 +192,7 @@ const DashboardTab = ({
                               {/* BOTÃO DE IMPRIMIR */}
                               <button 
                                 onClick={() => handleOpenPrintModal(p)}
-                                className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                                className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors hover:scale-105 hover:shadow-lg"
                                 title="Imprimir nesta impressora"
                               >
                                 <FaPlay size={10} />
@@ -200,7 +200,7 @@ const DashboardTab = ({
     
                               <button 
                                 onClick={() => setSelectedPrinterForMonitor(p)}
-                                className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all"
+                                className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all hover:scale-105 hover:shadow-lg"
                                 title="Monitorar Câmera e Controles"
                               >
                                 <FaEye />

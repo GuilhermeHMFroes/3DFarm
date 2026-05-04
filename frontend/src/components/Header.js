@@ -39,7 +39,7 @@ const Header = ({ user, setShowModal, setShowChangePassModal, setShowAdminUsersM
     
             {/* BOTÃO DE PERFIL */}
             <div className="relative group z-[100]">
-                <button className="p-3 bg-farm-medium-grey/20 text-white rounded-full border border-white/10 hover:bg-farm-medium-grey/40 transition-all">
+                <button className="p-3 bg-farm-medium-grey/20 text-white rounded-full border border-white/10 hover:bg-farm-medium-grey/40 transition-all hover:scale-105 hover:shadow-lg">
                     <FaUserCircle size={20} />
                 </button>
                       
