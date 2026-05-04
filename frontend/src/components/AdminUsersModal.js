@@ -47,8 +47,8 @@ const AdminUsersModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] p-4 backdrop-blur-sm">
-      <div className="bg-farm-dark-blue border border-farm-medium-grey p-6 rounded-xl w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[2000] p-4 backdrop-blur-sm">
+      <div className="backdrop-blur-lg border border-farm-medium-grey p-6 rounded-xl w-full max-w-md shadow-2xl">
         
         {/* Header do Modal */}
         <div className="flex justify-between items-center mb-6">
@@ -86,7 +86,7 @@ const AdminUsersModal = ({ onClose }) => {
             </select>
             <button 
               type="submit" disabled={loading}
-              className="bg-farm-medium-blue px-4 rounded text-white hover:bg-opacity-80 disabled:opacity-50 transition-all flex items-center gap-2 font-bold text-xs"
+              className="bg-farm-orange px-4 rounded text-white hover:bg-opacity-80 disabled:opacity-50 transition-all flex items-center gap-2 font-bold text-xs"
             >
               <FaUserPlus /> {loading ? '...' : 'ADD'}
             </button>

@@ -3,7 +3,7 @@ import React from 'react';
 import { FaPlus, FaUserCircle, FaKey, FaUsersCog, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import logoPrincipal from '../assets/logoTrasnparente.png';
 
-const Header = ({ user, setShowModal, setShowChangePassModal, setShowAdminUsersModal, handleLogout }) => {
+const Header = ({ user, setShowModal, setShowChangePassModal, setShowAdminUsersModal, handleLogout, setShowConfigModal }) => {
   return (
     
     
@@ -44,29 +44,29 @@ const Header = ({ user, setShowModal, setShowChangePassModal, setShowAdminUsersM
                 </button>
                       
                 {/* Menu Dropdown */}
-                <div className="absolute right-0 pt-2 w-52 bg-farm-dark-blue border border-farm-medium-grey rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] hidden group-hover:block z-[1100] overflow-hidden">
+                <div className="absolute right-0 pt-2 w-52 bg-black/60 border border-farm-medium-grey rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] hidden group-hover:block z-[1100] overflow-hidden">
                     
                     <div className="p-3 border-b border-white/10 text-xs text-farm-light-grey">
                         Olá, <b>{user.username}</b> ({user.role})
                     </div>
 
-                    <button onClick={() => setShowChangePassModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                    <button onClick={() => setShowChangePassModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg">
                         <FaKey /> Mudar Senha
                     </button>
 
                     {['admin'].includes(user?.role) && (
-                        <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                        <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg">
                             <FaUsersCog /> Gerenciar Usuários
                         </button>
                         )}
 
                     {['admin'].includes(user?.role) && (
-                        <button onClick={() => setShowAdminUsersModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                        <button onClick={() => setShowConfigModal(true)} className="w-full text-left p-3 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg">
                             <FaCog/> Configurações 
                         </button>
                         )}
                         
-                    <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
+                    <button onClick={handleLogout} className="w-full text-left p-3 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg">
                         <FaSignOutAlt /> Sair
                     </button>
 

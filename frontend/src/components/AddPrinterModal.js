@@ -51,12 +51,12 @@ function AddPrinterModal({ onClose, onPrinterAdded }) {
   return (
     // O Fundo escurecido (Tailwind)
     <div 
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50"
       onClick={onClose}
     >
       {/* O Conteúdo do Modal (Tailwind) */}
       <div 
-        className="bg-farm-light-grey text-farm-dark-blue p-8 rounded-xl shadow-2xl relative max-w-md w-11/12"
+        className="backdrop-blur-lg text-farm-white p-8 rounded-xl shadow-2xl relative max-w-md w-11/12 border border-farm-medium-grey"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botão X (Tailwind) */}
@@ -67,7 +67,7 @@ function AddPrinterModal({ onClose, onPrinterAdded }) {
           <FaTimes />
         </button>
         
-        <h2 className="text-2xl font-bold text-farm-dark-blue mt-0">
+        <h2 className="text-2xl font-bold mt-0 border-b-2 border-white-500">
           Adicionar Impressora
         </h2>
         
@@ -84,7 +84,7 @@ function AddPrinterModal({ onClose, onPrinterAdded }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Impressora da Sala"
-                className="w-full p-2 border border-farm-medium-grey rounded-lg text-black" // Adicionado text-black
+                className="w-full p-2 border border-farm-medium-grey rounded-lg text-white bg-black/50" // Adicionado text-black
                 required
               />
             </div>
@@ -97,14 +97,14 @@ function AddPrinterModal({ onClose, onPrinterAdded }) {
                 value={ip}
                 onChange={(e) => setIp(e.target.value)}
                 placeholder="Ex: 192.168.1.10"
-                className="w-full p-2 border border-farm-medium-grey rounded-lg text-black" // Adicionado text-black
+                className="w-full p-2 border border-farm-medium-grey rounded-lg text-white bg-black/50" // Adicionado text-black
               />
             </div>
 
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50"
+              className="w-full py-3 bg-farm-orange text-farm-dark-blue font-bold rounded-lg transition-all disabled:opacity-50 duration-200 hover:scale-105 hover:shadow-lg"
             >
               {isLoading ? 'A gerar...' : 'Gerar Token'}
             </button>

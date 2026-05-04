@@ -30,7 +30,7 @@ else:
 
 def create_app():
 
-    front = True # Se quiser servir o frontend pelo Flask, mude para True se não, deixe como False e use 'npm start' para rodar o React separadamente (recomendado True para desenvolvimento)
+    front = False # Se quiser servir o frontend pelo Flask, mude para True se não, deixe como False e use 'npm start' para rodar o React separadamente (recomendado True para desenvolvimento)
 
     if front:
 

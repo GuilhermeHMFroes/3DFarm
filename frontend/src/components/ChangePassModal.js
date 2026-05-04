@@ -21,8 +21,8 @@ const ChangePassModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
-      <div className="bg-farm-dark-blue border border-farm-medium-grey p-6 rounded-xl w-full max-w-sm shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
+      <div className="backdrop-blur-lg border border-farm-medium-grey p-6 rounded-xl w-full max-w-sm shadow-2xl">
         <h3 className="text-white font-bold mb-4">Alterar Senha</h3>
         <div className="space-y-3">
           <input 
@@ -42,10 +42,10 @@ const ChangePassModal = ({ onClose }) => {
           />
         </div>
         <div className="flex gap-2 mt-6">
-          <button onClick={onClose} className="flex-1 bg-gray-600 p-2 rounded text-white text-sm hover:bg-gray-500">
+          <button onClick={onClose} className="flex-1 bg-red-800 p-2 rounded text-white text-sm hover:bg-opacity-80">
             Cancelar
           </button>
-          <button onClick={handleSave} className="flex-1 bg-farm-medium-blue p-2 rounded text-white text-sm font-bold hover:bg-opacity-80">
+          <button onClick={handleSave} className="flex-1 bg-farm-orange p-2 rounded text-white text-sm font-bold hover:bg-opacity-80">
             Salvar
           </button>
         </div>

@@ -5,11 +5,10 @@ import AddPrinterModal from './components/AddPrinterModal'; // <-- Importa o mod
 import axios from 'axios'; // Para o upload e API
 
 import SelectFileModal from './components/SelectFileModal'; // <--- Importa o Modal para imprimir os g-code
-
 import MonitorModal from './components/MonitorModal'; // <--- Importa o Modal para Monitorar a impressora
-
 import ChangePassModal from './components/ChangePassModal';
 import AdminUsersModal from './components/AdminUsersModal';
+import ConfigModal from './components/ConfigModal';
 
 import Footer from './components/Footer';
 import DashboardTab from './components/DashboardTab';
@@ -185,6 +184,8 @@ function App() {
   // Estados para os novos modais de usuário
   const [showChangePassModal, setShowChangePassModal] = useState(false);
   const [showAdminUsersModal, setShowAdminUsersModal] = useState(false);
+
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
 
   // Estado para controlar qual aba está ativa (Dashboard ou Monitoramento)
@@ -725,6 +726,13 @@ function App() {
           />
         )}
 
+        {/* Modal de configurações do sistema */}
+        {showConfigModal && (
+          <ConfigModal 
+            onClose={() => setShowConfigModal(false)}
+          />
+        )}
+
       </nav>
 
       {/* Se o sistema ainda estiver validando o login ou buscando impressoras */}
@@ -747,6 +755,7 @@ function App() {
               setShowModal={setShowModal}
               setShowChangePassModal={setShowChangePassModal}
               setShowAdminUsersModal={setShowAdminUsersModal}
+              setShowConfigModal={setShowConfigModal}
               handleLogout={handleLogout}
             />
 
