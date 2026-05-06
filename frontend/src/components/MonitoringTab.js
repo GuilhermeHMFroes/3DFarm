@@ -63,25 +63,33 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
                 <div className="animate-bounce">
                     <FaExclamationTriangle className="mx-auto text-8xl text-red-700 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]" />
                 </div>
-                <p className="text-farm-medium-grey text-lg">Todas as {disconnectedPrinters.length} impressoras estão desconectadas. Contate o administrador.</p>
+                <p className="text-farm-medium-grey text-lg">Todas as {disconnectedPrinters.length} impressoras estão desconectadas. Contate o administrador. teste pt1</p>
             </div>
         
         ):(
 
+            
 
-            <Card className="overflow-hidden !border-2 !border-red-500 shadow-lg shadow-red-500/20 transition-all hover:scale-105 hover:shadow-lg">
-                <div className="flex items-center text-xl gap-3 justify-between mb-2 p-2">
-                    <h2 className="border-b-2 border-red-500 font-bold flex items-center gap-3 pb-3 mb-4 mt-">Impressoras desconectadas</h2>
-                    <FaExclamationTriangle className="mx-auto text-2xl text-red-500 border-2 border-red-500 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]" />
-                </div>
-    
-                {/* Componente que gerencia o Socket de vídeo para cada card */}
-                <div className=" items-center">
-                    <h3 className=" text-red-500 font-bold text-center ">Alerta!</h3>
-                </div>
 
-                <h3>Tem {disconnectedPrinters.length} impressoras desconectadas, avise ao adiministrador!</h3>
-            </Card>
+            <div>
+                {disconnectedPrinters.length > 0 && (
+
+                    <Card className="overflow-hidden !border-2 !border-red-500 shadow-lg shadow-red-500/20 transition-all hover:scale-105 hover:shadow-lg">
+                        <div className="flex items-center text-xl gap-3 justify-between mb-2 p-2">
+                            <h2 className="border-b-2 border-red-500 font-bold flex items-center gap-3 pb-3 mb-4 mt-">Impressoras desconectadas</h2>
+                            <FaExclamationTriangle className="mx-auto text-2xl text-red-500 border-2 border-red-500 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]" />
+                        </div>
+            
+                        {/* Componente que gerencia o Socket de vídeo para cada card */}
+                        <div className=" items-center">
+                            <h3 className=" text-red-500 font-bold text-center ">Alerta!</h3>
+                        </div>
+
+                        <h3>Tem {disconnectedPrinters.length} impressoras desconectadas, avise ao adiministrador! teste pt2</h3>
+                    </Card>
+
+                )}
+            </div>
 
 
         )}

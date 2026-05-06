@@ -68,7 +68,7 @@ const DashboardTab = ({
                     {files.length === 0 && <p className="text-farm-medium-grey">Nenhum arquivo.</p>}
                         
                     {files.map((filename, index) => (
-                        <li key={index} className="flex items-center justify-between p-2 bg-farm-dark-blue rounded-lg group border-b border-dashed border-farm-medium-grey">
+                        <li key={index} className="flex items-center justify-between p-2 rounded-lg group border-b border-dashed border-farm-medium-grey">
                             <div className="flex items-center gap-3 truncate">
                                 <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
                                 <span className="truncate" title={filename}>{filename}</span>
@@ -100,8 +100,9 @@ const DashboardTab = ({
                     className={`
                         flex flex-col items-center justify-center w-full h-48 px-4 
                         border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                        transition-all hover:scale-105 hover:shadow-lg
                         ${isDragging 
-                            ? 'border-farm-orange bg-farm-orange/20' // Cor quando arrasta por cima
+                            ? 'border-farm-orange bg-farm-orange/20 transition-all scale-105 shadow-lg' // Cor quando arrasta por cima
                             : 'border-farm-medium-grey bg-farm-dark-blue/50 hover:bg-farm-dark-blue'
                         }
                     `}
@@ -119,12 +120,12 @@ const DashboardTab = ({
                       
                 {/* Visualização do arquivo selecionado */}
                 {selectedFile && (
-                    <div className="flex justify-between items-center mt-4 p-3 bg-farm-dark-blue border border-farm-medium-grey/30 rounded-lg">
+                    <div className="flex justify-between items-center mt-4 p-3 border border-farm-medium-grey/30 rounded-lg">
                         <div className="flex items-center gap-2 truncate">
                             <FaFileCode className="text-farm-orange flex-shrink-0" />
                             <span className="text-farm-light-grey truncate text-sm">{selectedFile.name}</span>
                         </div>
-                        <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2">X</button>
+                        <button onClick={() => setSelectedFile(null)} className="text-red-500 font-bold ml-2 hover:bg-red-500/10 rounded px-2 transition-all hover:scale-105 hover:shadow-lg">X</button>
                     </div>
                 )}
                       
@@ -182,7 +183,7 @@ const DashboardTab = ({
                     {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
                         
                         {idlePrinters.map(p => (
-                            <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1">
+                            <li key={p.id} className="text-sm flex justify-between items-center border-b border-farm-medium-grey/30 py-1 pr-1 ">
                             <span className="truncate flex-1" title={p.name}>
                               {p.name || 'Sem Nome'}
                             </span>

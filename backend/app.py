@@ -60,10 +60,12 @@ def create_app():
     app.config["JWT_SECRET_KEY"] = key_file()
 
     #configuração tempo para o jwt
-    #app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7) # deixa o token válido por 7 dias
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False # token nunca expira
+    experingJWTToken = False # Mude para True para habilitar expiração do token JWT, ou False para tokens que nunca expiram
+    if experingJWTToken:
+        app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7) # deixa o token válido pelos dias determinados
+    else:
+        app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False # token nunca expira
 
-    
     #CORS(app)
     CORS(app, resources={r"/*": {"origins": "*"}})
     db.init_db()
