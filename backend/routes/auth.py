@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
 from extensions import bcrypt
 
 import db
 import json
+
+from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -36,9 +38,20 @@ def auth_login():
         user = db.get_user_by_username(username)
 
     if user and bcrypt.check_password_hash(user['password'], password):
+
+        # geração dinâmica do token com base nas configurações do banco (expirando ou não)
+        settings = db.get_all_settings()
+
+        is_expiring = settings.get('experingJWTToken') == 'True'
+        days = int(settings.get('jwtDays', 7))
+
+        # Se no banco estiver 'True', usa os dias. Se estiver 'False', o token não expira.
+        expires = timedelta(days=days) if is_expiring else False
+
         # MANTEMOS O JSON.DUMPS pois seu código antigo usava assim para decodificar no front
         identity_data = json.dumps({"id": user['id'], "role": user['role']})
-        token = create_access_token(identity=identity_data)
+        token = create_access_token(identity=identity_data, expires_delta=expires)
+        print(f"Usuário {username} logado. Token gerado com expiração: {expires}")
 
         # RETORNO EXATO que o seu Frontend espera:
         return jsonify({
@@ -47,6 +60,8 @@ def auth_login():
             "role": user['role'], 
             "username": user['username']
         })
+    
+
     
     return jsonify({"success": False, "message": "Usuário ou senha incorretos"}), 401
 

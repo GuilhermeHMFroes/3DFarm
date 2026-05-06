@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 
-
+from datetime import datetime
+import json
 import db
 
 printers_bp = Blueprint('printers', __name__)
@@ -9,12 +10,55 @@ printers_bp = Blueprint('printers', __name__)
 def row_to_dict(row):
     return {k: row[k] for k in row.keys()} if row else None
 
-# Listar Impressoras
+# Listar Impressoras e atualizar status de conexão (Idle, Printing, Disconnected)
 @printers_bp.route("/lists")
 @jwt_required()
 def printers_lists():
-    printers = db.get_all_printers()
-    return jsonify({"success": True, "printers": [row_to_dict(p) for p in printers]})
+    # 1. Busca as impressoras e as configurações de tempo
+    printers_raw = db.get_all_printers()
+    settings = db.get_all_settings()
+    
+    # Tempo do banco (convertido de minutos para segundos)
+    try:
+        timeout_limit = float(settings.get('inactivity_time', 2.0))
+        print(f"Timeout configurado para {timeout_limit} segundos")
+    except:
+        timeout_limit = 120 # 2 minutos padrão
+
+    now = datetime.utcnow() # SQLite usa UTC
+    printers_ready = []
+
+    for p in printers_raw:
+        p_dict = row_to_dict(p)
+        
+        # --- LÓGICA QUE ESTAVA NO APP.JS AGORA AQUI ---
+        
+        # 1. Verifica Inatividade
+        is_disconnected = True
+        if p_dict.get('last_seen'):
+            last_seen_dt = datetime.strptime(p_dict['last_seen'], '%Y-%m-%d %H:%M:%S')
+            if (now - last_seen_dt).total_seconds() < timeout_limit:
+                is_disconnected = False
+
+        if is_disconnected:
+            p_dict['condition'] = 'disconnected'
+        else:
+            # 2. Verifica Status (Printing vs Idle)
+            try:
+                status_data = json.loads(p_dict.get('last_status', '{}'))
+                state = status_data.get('estado', '').upper()
+                
+                active_states = ["PRINTING", "PAUSED", "PAUSING", "RESUMING", "FINISHING"]
+                if state in active_states:
+                    p_dict['condition'] = 'active'
+                else:
+                    p_dict['condition'] = 'idle'
+            except:
+                p_dict['condition'] = 'idle'
+
+        printers_ready.append(p_dict)
+    
+    return jsonify({"success": True, "printers": printers_ready})
 
 # Adicionar Impressora
 @printers_bp.route("/add", methods=["POST"])

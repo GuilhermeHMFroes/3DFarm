@@ -518,49 +518,22 @@ function App() {
 
   //Sistemade sepação das impressoras nos cards de acordo com os seus status
 
-  const categorizePrinters = (printerList) => {
-    const now = new Date();
-    const active = [];
-    const idle = [];
-    const disconnected = [];
+const categorizePrinters = (printerList) => {
+  const active = [];
+  const idle = [];
+  const disconnected = [];
 
-    printerList.forEach(printer => {
-      // 1. Verifica se está desconectada (sem sinal há mais de 2 min)
-      const lastSeenDate = printer.last_seen ? new Date(printer.last_seen + "Z") : null;
-      
-      if (!lastSeenDate || (now - lastSeenDate > 120000)) { 
-        disconnected.push(printer);
-        return; 
-      }
+  printerList.forEach(printer => {
+    // Agora apenas lemos o que o Backend já calculou
+    if (printer.condition === 'active') active.push(printer);
+    else if (printer.condition === 'idle') idle.push(printer);
+    else disconnected.push(printer);
+  });
 
-      // 2. Lê o status
-      let statusData = {};
-      try {
-        if (printer.last_status) {
-          statusData = JSON.parse(printer.last_status);
-        }
-      } catch (e) {
-        console.error("Erro ao ler status", e);
-      }
-
-      // 3. Verifica se está imprimindo (CORREÇÃO AQUI)
-      // Convertemos tudo para MAIÚSCULAS para garantir que funciona sempre
-      const rawState = statusData.estado || "";
-      const state = rawState.toUpperCase(); 
-
-      // Lista de estados que consideramos "ATIVOS"
-      if (state === "PRINTING" || state === "PAUSED" || state === "PAUSING" || state === "RESUMING" || state === "FINISHING") {
-        active.push(printer);
-      } else {
-        // Se não está imprimindo nem desconectada, está Ociosa (OPERATIONAL)
-        idle.push(printer);
-      }
-    });
-
-    setActivePrinters(active);
-    setIdlePrinters(idle);
-    setDisconnectedPrinters(disconnected);
-  };
+  setActivePrinters(active);
+  setIdlePrinters(idle);
+  setDisconnectedPrinters(disconnected);
+};
 
   
 

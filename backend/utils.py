@@ -32,4 +32,5 @@ def key_file():
     # Lê a chave do arquivo
     with open(KEY_FILE, "r") as f:
         return f.read().strip()
+      
         

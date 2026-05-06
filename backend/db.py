@@ -4,6 +4,7 @@ import sqlite3
 from pathlib import Path
 import os
 
+
 # --- LÓGICA DE CAMINHO DINÂMICO ---
 if os.path.exists("/app"):
     # No Docker, usamos a pasta mapeada pelo volume
@@ -33,7 +34,7 @@ def init_db():
         token TEXT UNIQUE,
         last_seen TIMESTAMP,
         last_status TEXT,
-        webcam_url TEXT  -- Adicionado aqui para novos bancos
+        webcam_url TEXT
     )
     """)
 
@@ -79,7 +80,22 @@ def init_db():
     )
     """)
 
-    conn.commit()
+    # Cria tabela de configurações
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS system_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+
+    # Seeding: Garante que o tempo de inatividade exista
+    cur.execute("SELECT COUNT(*) FROM system_settings WHERE key = 'inactivity_time'")
+    if cur.fetchone()[0] == 0:
+        cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('inactivity_time', '2.5'))
+        cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('experingJWTToken', 'False'))
+        cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('jwtDays', '7'))
+        conn.commit()
+    
     conn.close()
 
 # Funções de Acesso ao Banco de Dados do Dashboard
@@ -239,26 +255,6 @@ def mark_queue_status(qid, status):
     conn.commit()
     conn.close()
 
-def update_printer_connection(token, ip, last_status=None):
-    conn = get_conn()
-    cur = conn.cursor()
-    # Verifica se o token existe
-    printer = cur.execute("SELECT id FROM printers WHERE token = ?", (token,)).fetchone()
-    if not printer:
-        conn.close()
-        return False
-    
-    # Atualiza IP, status e última vez vista
-    cur.execute("""
-        UPDATE printers 
-        SET ip = ?, last_status = ?, last_seen = CURRENT_TIMESTAMP 
-        WHERE token = ?
-    """, (ip, last_status, token))
-    
-    conn.commit()
-    conn.close()
-    return True
-
 def get_next_queued_item(token):
     """Busca o próximo arquivo na fila para um token específico."""
     conn = get_conn()
@@ -322,6 +318,31 @@ def get_printer_webcam_info(token):
     row = cur.execute("SELECT ip, webcam_url FROM printers WHERE token = ?", (token,)).fetchone()
     conn.close()
     return dict(row) if row else None
+
+def get_all_settings():
+    conn = get_conn()
+    cur = conn.cursor()
+    # Busca todas as chaves e valores
+    cur.execute("SELECT key, value FROM system_settings")
+    rows = cur.fetchall()
+    # Transforma em um dicionário: {'jwt_days': '7', ...}
+    settings = {row['key']: row['value'] for row in rows}
+    conn.close()
+    return settings
+
+def update_settings(settings_dict):
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        for key, value in settings_dict.items():
+            # INSERT OR REPLACE é o segredo para atualizar em vez de duplicar
+            cur.execute("""
+                INSERT OR REPLACE INTO system_settings (key, value) 
+                VALUES (?, ?)
+            """, (key, str(value)))
+        conn.commit()
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     init_db()
