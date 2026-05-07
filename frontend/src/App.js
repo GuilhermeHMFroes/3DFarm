@@ -776,7 +776,7 @@ const categorizePrinters = (printerList) => {
 
               
               
-              {activeTab === 'dashboard' && user?.role !== 'monitor' ? (
+              {activeTab === 'dashboard' && ['admin', 'user'].includes(user?.role) ? (
 
                 
 

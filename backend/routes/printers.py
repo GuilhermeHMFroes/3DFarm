@@ -21,7 +21,7 @@ def printers_lists():
     # Tempo do banco (convertido de minutos para segundos)
     try:
         timeout_limit = float(settings.get('inactivity_time', 2.0))
-        print(f"Timeout configurado para {timeout_limit} segundos")
+        #print(f"Timeout configurado para {timeout_limit} segundos")
     except:
         timeout_limit = 120 # 2 minutos padrão
 
