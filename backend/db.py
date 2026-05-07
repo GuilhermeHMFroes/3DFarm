@@ -91,7 +91,7 @@ def init_db():
     # Seeding: Garante que o tempo de inatividade exista
     cur.execute("SELECT COUNT(*) FROM system_settings WHERE key = 'inactivity_time'")
     if cur.fetchone()[0] == 0:
-        cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('inactivity_time', '2.5'))
+        cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('inactivity_time', '10'))
         cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('experingJWTToken', 'False'))
         cur.execute("INSERT INTO system_settings (key, value) VALUES (?, ?)", ('jwtDays', '7'))
         conn.commit()
