@@ -1,0 +1,23 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Instala dependências do sistema necessárias para algumas libs python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copia e instala os requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia o código do backend
+COPY . .
+
+# Garante que as pastas existam
+RUN mkdir -p data uploads
+
+EXPOSE 5000
+
+# Rodando com Gunicorn (recomendado para produção) ou python direto
+CMD ["python", "app.py"]
