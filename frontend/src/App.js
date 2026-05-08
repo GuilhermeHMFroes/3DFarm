@@ -43,7 +43,7 @@ export const API_BASE_URL = process.env.NODE_ENV === 'development'
 axios.defaults.baseURL = API_BASE_URL;
 
 const Card = ({ children, className = "" }) => (
-  <div className={`backdrop-blur-lg border border-gray-800 rounded-xl p-4 shadow-xl ${className}  max-h-100`}>
+  <div className={`backdrop-blur-lg border border-gray-800 rounded-xl p-4 shadow-xl ${className}  max-h-100 transition-all hover:scale-105 hover:shadow-lg`}>
     {children}
   </div>
 );

@@ -31,14 +31,14 @@ const DashboardTab = ({
                             <div className="flex items-center gap-4 flex-shrink-0"> {/* Aumentei o 'gap-3' para 'gap-4' */}
                                 
                                 {/* Status (Token) */}
-                                <span className={`font-mono text-xs text-farm-medium-blue`}>
+                                <span className={`font-mono text-xs text-farm-orange`}>
                                     ...{printer.token.slice(-6)}
                                 </span>
                                 
                                 {/* --- O NOVO BOTÃO DE COPIAR --- */}
                                 <button 
                                     onClick={() => handleCopyToken(printer.token)}
-                                    className="text-farm-medium-blue hover:text-farm-light-grey transition-colors hover:scale-105 hover:shadow-lg"
+                                    className="text-farm-orange hover:text-farm-light-grey transition-colors hover:scale-105 hover:shadow-lg"
                                     title="Copiar Token Inteiro"
                                 >
                                     <FaCopy />
@@ -70,7 +70,7 @@ const DashboardTab = ({
                     {files.map((filename, index) => (
                         <li key={index} className="flex items-center justify-between p-2 rounded-lg group border-b border-dashed border-farm-medium-grey">
                             <div className="flex items-center gap-3 truncate">
-                                <FaFileCode className="text-farm-medium-blue flex-shrink-0" />
+                                <FaFileCode className="text-farm-orange flex-shrink-0" />
                                 <span className="truncate" title={filename}>{filename}</span>
                             </div>
                             
@@ -196,7 +196,7 @@ const DashboardTab = ({
                               {/* BOTÃO DE IMPRIMIR */}
                               <button 
                                 onClick={() => handleOpenPrintModal(p)}
-                                className="ml-2 bg-farm-medium-blue text-white p-2 rounded hover:bg-blue-600 transition-colors hover:scale-105 hover:shadow-lg"
+                                className="ml-2 bg-farm-orange text-farm-dark-blue p-2 rounded hover:bg-farm-orange hover:text-white transition-colors hover:scale-105 hover:shadow-lg"
                                 title="Imprimir nesta impressora"
                               >
                                 <FaPlay size={10} />
@@ -204,7 +204,7 @@ const DashboardTab = ({
     
                               <button 
                                 onClick={() => setSelectedPrinterForMonitor(p)}
-                                className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded-full hover:bg-farm-medium-blue hover:text-white transition-all hover:scale-105 hover:shadow-lg"
+                                className="p-2 bg-farm-orange text-farm-dark-blue rounded-full hover:bg-farm-orange hover:text-white transition-all hover:scale-105 hover:shadow-lg"
                                 title="Monitorar Câmera e Controles"
                               >
                                 <FaEye />
