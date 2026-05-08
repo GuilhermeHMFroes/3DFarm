@@ -10,16 +10,25 @@ Esse reposositório faz parte do sistema de fazenda de impressão 3D, send neces
 
 ## Docker
 
-Esse arquivo até o momento possui apenas uma forma de rodar no docker, sendo necessário importar apenas que é rodando o backend(flask) e o frontend(react) no mesmo container, isso se deve da minha necessidade pessoal ao usar um sistema de vpn dns da [cloudflare](https://developers.cloudflare.com/api/), precisando rodar tudo em um container.
+O docker-compose desse arquivo já cria todos os containers necessários, que é um container para o backend flask outro container para o frontend react e um container nginx já configurado, a única forma de comunicação é com o container nginx que comunica com os outros containers que estão dentro da subrede no docker. o container nginx fica aberto na porta :3000 caso queira usar um sistema de dns como o [cloudflare](https://developers.cloudflare.com/api/) basta apontar para a porta desejada. Para criar  um container de dns da cloudflare execute esses parâmetro como um docker-compose:
 
-Obs.: Futuramente vou adicionar a opção de rodar o backend e o frontend em containers separados
+```
+services:
 
-Antes de executar o container verifique no `app.py` na linha 32 se a opção front está em True:
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare_tunnel_3000
+    restart: always
+    # Este comando cria um link público aleatório sem precisar de domínio
+    command: tunnel --url http://[ip de rede do servidor. ex: 192.168.1.2]:3000
+```
+
+Antes de executar o container verifique no `app.py` na linha 32 se a opção front está em False:
 
 ```
 def create_app():
 
-    front = True
+    front = False
 ```
 
 Pois ela é nescessária para executar o frontend junto com o backend.
