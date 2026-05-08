@@ -31,8 +31,6 @@ def create_app():
     front = False
 ```
 
-Pois ela é nescessária para executar o frontend junto com o backend.
-
 Na pasta raiz do projeto execute o comando `docker-compose up -d --build` se for nescessário execute com o `sudo`.
 
 Se tiver utilizando o portainer para gerenciar container docker, dá para realizar a importaçõ direto pelo github sem a nescessidade de clonar o repositório:
