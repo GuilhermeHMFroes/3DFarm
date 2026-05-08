@@ -22,11 +22,11 @@ const SelectFileModal = ({ onClose, onSelectFile, printerName }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50"
       onClick={onClose}
     >
       <div 
-        className="bg-farm-light-grey text-farm-dark-blue p-6 rounded-xl shadow-2xl relative max-w-md w-11/12 max-h-[80vh] flex flex-col"
+        className="backdrop-blur-lg p-6 border border-farm-medium-grey rounded-xl shadow-2xl relative max-w-md w-11/12 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -36,11 +36,11 @@ const SelectFileModal = ({ onClose, onSelectFile, printerName }) => {
           <FaTimes />
         </button>
         
-        <h2 className="text-xl font-bold text-farm-dark-blue mt-0 mb-4 pr-8">
+        <h2 className="text-xl font-bold text-farm-medium-blue mt-0 mb-4 pr-8">
           Imprimir em: <span className="text-farm-medium-blue">{printerName}</span>
         </h2>
         
-        <p className="mb-2 text-sm text-farm-medium-grey">Selecione um arquivo para iniciar:</p>
+        <p className="mb-2 text-sm text-white">Selecione um arquivo para iniciar:</p>
 
         {loading ? (
           <p className="text-center py-4">Carregando arquivos...</p>
@@ -50,12 +50,12 @@ const SelectFileModal = ({ onClose, onSelectFile, printerName }) => {
             
             <ul className="space-y-2">
               {files.map((file, index) => (
-                <li key={index}>
+                <li key={index} className="">
                   <button
                     onClick={() => onSelectFile(file)}
-                    className="w-full flex items-center justify-between p-3 bg-white border border-farm-medium-grey/30 rounded-lg hover:bg-farm-medium-blue hover:text-white transition-colors group"
+                    className="w-full flex items-center justify-between p-3 border border-farm-medium-grey/30 rounded-lg hover:bg-farm-orange text-white transition-colors group transition-all hover:scale-95 hover:shadow-lg"
                   >
-                    <div className="flex items-center gap-2 truncate">
+                    <div className="flex items-center gap-2 truncate ">
                       <FaFileCode className="text-farm-medium-grey group-hover:text-white" />
                       <span className="truncate text-sm font-medium">{file}</span>
                     </div>

@@ -156,16 +156,16 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
   } catch (e) {}
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-50 p-4" onClick={onClose}>
-      <div className="bg-farm-dark-blue border border-farm-medium-grey rounded-xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[95vh]" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4" onClick={onClose}>
+      <div className="backdrop-blur-lg border border-farm-medium-grey rounded-xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[95vh]" onClick={e => e.stopPropagation()}>
         
         {/* Cabeçalho */}
         <div className="flex justify-between items-center p-4 border-b border-farm-medium-grey bg-black/20">
           <h2 className="text-xl font-bold text-farm-light-grey">
             Monitorando: <span className="text-farm-medium-blue">{printer.name}</span>
-            {isConnected ? <span className="text-xs text-green-500 ml-2">● Ao Vivo</span> : <span className="text-xs text-red-500 ml-2">● Conectando...</span>}
+            {isConnected ? <span className="text-xs text-red-500 ml-2 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]">● Ao Vivo</span> : <span className="text-xs text-red-500 ml-2">● Conectando...</span>}
           </h2>
-          <button onClick={onClose} className="text-2xl text-farm-medium-grey hover:text-white"><FaTimes /></button>
+          <button onClick={onClose} className="text-2xl text-farm-medium-grey hover:text-white transition-all hover:scale-105 hover:shadow-lg"><FaTimes /></button>
         </div>
 
         {/* Corpo Principal */}
@@ -193,13 +193,13 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
             
              {/* Controles de Impressão */}
              <div className="grid grid-cols-3 gap-2">
-                <button onClick={() => {if(window.confirm('Pausar?')) sendCommand('pause')}} className="flex flex-col items-center gap-1 p-3 bg-yellow-600/20 text-yellow-500 rounded hover:bg-yellow-600/40 border border-yellow-600/50 transition-all">
+                <button onClick={() => {if(window.confirm('Pausar?')) sendCommand('pause')}} className="flex flex-col items-center gap-1 p-3 bg-yellow-600/20 text-yellow-500 rounded hover:bg-yellow-600/40 border border-yellow-600/50 transition-all hover:scale-105 hover:shadow-lg">
                   <FaPause /> <span className="text-xs font-bold">PAUSAR</span>
                 </button>
-                <button onClick={() => {if(window.confirm('Resumir?')) sendCommand('resume')}} className="flex flex-col items-center gap-1 p-3 bg-green-600/20 text-green-500 rounded hover:bg-green-600/40 border border-green-600/50 transition-all">
+                <button onClick={() => {if(window.confirm('Resumir?')) sendCommand('resume')}} className="flex flex-col items-center gap-1 p-3 bg-green-600/20 text-green-500 rounded hover:bg-green-600/40 border border-green-600/50 transition-all hover:scale-105 hover:shadow-lg">
                   <FaPlay /> <span className="text-xs font-bold">RESUMIR</span>
                 </button>
-                <button onClick={() => {if(window.confirm('CANCELAR IMPRESSÃO?')) sendCommand('cancel')}} className="flex flex-col items-center gap-1 p-3 bg-red-600/20 text-red-500 rounded hover:bg-red-600/40 border border-red-600/50 transition-all">
+                <button onClick={() => {if(window.confirm('CANCELAR IMPRESSÃO?')) sendCommand('cancel')}} className="flex flex-col items-center gap-1 p-3 bg-red-600/20 text-red-500 rounded hover:bg-red-600/40 border border-red-600/50 transition-all hover:scale-105 hover:shadow-lg">
                   <FaStop /> <span className="text-xs font-bold">CANCELAR</span>
                 </button>
               </div>
@@ -208,7 +208,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
             <div className="bg-white/5 p-4 rounded-lg border border-white/10">
               <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
                 <h3 className="font-bold text-farm-light-grey flex items-center gap-2"><FaThermometerHalf /> Temperaturas</h3>
-                <button onClick={coolDown} className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-500/40">Resfriar Tudo (OFF)</button>
+                <button onClick={coolDown} className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-500/40 transition-all hover:scale-105 hover:shadow-lg">Resfriar Tudo (OFF)</button>
               </div>
               {/* Bico */}
               <div className="flex items-center justify-between mb-4">
@@ -221,7 +221,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                 </div>
                 <div className="flex gap-2">
                     <input type="number" className="w-16 bg-black/30 border border-farm-medium-grey rounded px-2 text-white text-center" value={nozzleTarget} onChange={e => setNozzleTarget(e.target.value)} />
-                    <button onClick={setNozzleTemp} className="bg-farm-orange text-farm-dark-blue font-bold px-3 py-1 rounded hover:opacity-90">Set</button>
+                    <button onClick={setNozzleTemp} className="bg-farm-orange text-farm-dark-blue font-bold px-3 py-1 rounded hover:opacity-90 transition-all hover:scale-105 hover:shadow-lg">Set</button>
                 </div>
               </div>
               {/* Mesa */}
@@ -235,7 +235,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                 </div>
                 <div className="flex gap-2">
                     <input type="number" className="w-16 bg-black/30 border border-farm-medium-grey rounded px-2 text-white text-center" value={bedTarget} onChange={e => setBedTarget(e.target.value)} />
-                    <button onClick={setBedTemp} className="bg-farm-medium-blue text-white font-bold px-3 py-1 rounded hover:opacity-90">Set</button>
+                    <button onClick={setBedTemp} className="bg-farm-orange text-farm-dark-blue font-bold px-3 py-1 rounded hover:opacity-90 transition-all hover:scale-105 hover:shadow-lg">Set</button>
                 </div>
               </div>
             </div>
@@ -260,7 +260,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
               </div>
               <form onSubmit={handleTerminalSubmit} className="flex border-t border-farm-medium-grey/30">
                 <input type="text" className="flex-1 bg-transparent text-white font-mono text-xs p-2 focus:outline-none uppercase" placeholder="Comando..." value={terminalCmd} onChange={e => setTerminalCmd(e.target.value)} />
-                <button type="submit" className="px-4 text-farm-medium-grey hover:text-farm-orange transition-colors"><FaArrowRight /></button>
+                <button type="submit" className="px-4 text-farm-medium-grey hover:text-farm-orange transition-colors transition-all hover:scale-105 hover:shadow-lg"><FaArrowRight /></button>
               </form>
             </div>
 
@@ -271,7 +271,7 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                   <span className="text-[10px] font-bold text-farm-medium-grey uppercase flex items-center gap-2"><FaArrowsAlt /> Movimentação</span>
                   <div className="flex gap-1">
                     {[1, 10, 100].map(step => (
-                      <button key={step} onClick={() => setMoveStep(step)} className={`text-[10px] px-2 py-0.5 rounded border ${moveStep === step ? 'bg-farm-medium-blue border-farm-medium-blue text-white' : 'border-white/10 text-farm-light-grey'}`}>{step}mm</button>
+                      <button key={step} onClick={() => setMoveStep(step)} className={`text-[10px] px-2 py-0.5 rounded border ${moveStep === step ? 'bg-farm-medium-blue border-farm-medium-blue text-white' : 'border-white/10 text-farm-light-grey'} transition-all hover:scale-105 hover:shadow-lg`}>{step}mm</button>
                     ))}
                   </div>
                </div>
@@ -280,27 +280,27 @@ const MonitorModal = ({ printer: initialPrinterData, onClose }) => {
                   {/* Pad XY */}
                   <div className="grid grid-cols-3 gap-1">
                     <div />
-                    <button onClick={() => sendCommand(`G91\nG1 Y${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretUp /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 Y${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white transition-all hover:scale-105 hover:shadow-lg"><FaCaretUp /></button>
                     <div />
-                    <button onClick={() => sendCommand(`G91\nG1 X-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretLeft /></button>
-                    <button onClick={() => sendCommand('G28 X Y')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40"><FaHome /></button>
-                    <button onClick={() => sendCommand(`G91\nG1 X${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretRight /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 X-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-whitetransition-all hover:scale-105 hover:shadow-lg"><FaCaretLeft /></button>
+                    <button onClick={() => sendCommand('G28 X Y')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded hover:bg-farm-medium-blue/40 transition-all hover:scale-105 hover:shadow-lg"><FaHome /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 X${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white transition-all hover:scale-105 hover:shadow-lg"><FaCaretRight /></button>
                     <div />
-                    <button onClick={() => sendCommand(`G91\nG1 Y-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretDown /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 Y-${moveStep} F3000\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white transition-all hover:scale-105 hover:shadow-lg"><FaCaretDown /></button>
                     <div />
                   </div>
 
                   {/* Eixo Z */}
                   <div className="flex flex-col gap-1 items-center border-l border-white/10 pl-4">
-                    <button onClick={() => sendCommand(`G91\nG1 Z${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretUp /></button>
-                    <button onClick={() => sendCommand('G28 Z')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded text-[10px] font-bold uppercase">Z</button>
-                    <button onClick={() => sendCommand(`G91\nG1 Z-${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white"><FaCaretDown /></button>
+                    <button onClick={() => sendCommand(`G91\nG1 Z${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white transition-all hover:scale-105 hover:shadow-lg"><FaCaretUp /></button>
+                    <button onClick={() => sendCommand('G28 Z')} className="p-2 bg-farm-medium-blue/20 text-farm-medium-blue rounded text-[10px] font-bold uppercase transition-all hover:scale-105 hover:shadow-lg">Z</button>
+                    <button onClick={() => sendCommand(`G91\nG1 Z-${moveStep} F200\nG90`)} className="p-2 bg-white/10 rounded hover:bg-white/20 text-white transition-all hover:scale-105 hover:shadow-lg"><FaCaretDown /></button>
                   </div>
 
                   {/* Extrusora */}
                   <div className="flex flex-col gap-2 pl-4 border-l border-white/10">
-                    <button onClick={() => sendCommand(`G91\nG1 E${moveStep} F300\nG90`)} className="px-2 py-1 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded text-[9px] font-bold hover:bg-orange-500/20 uppercase">Extrusar</button>
-                    <button onClick={() => sendCommand(`G91\nG1 E-${moveStep} F300\nG90`)} className="px-2 py-1 bg-white/5 text-white rounded text-[9px] font-bold hover:bg-white/20 uppercase">Retrair</button>
+                    <button onClick={() => sendCommand(`G91\nG1 E${moveStep} F300\nG90`)} className="px-2 py-1 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded text-[9px] font-bold hover:bg-orange-500/20 uppercase transition-all hover:scale-105 hover:shadow-lg">Extrusar</button>
+                    <button onClick={() => sendCommand(`G91\nG1 E-${moveStep} F300\nG90`)} className="px-2 py-1 bg-white/5 text-white rounded text-[9px] font-bold hover:bg-white/20 uppercasetransition-all hover:scale-105 hover:shadow-lg">Retrair</button>
                   </div>
                </div>
             </div>

@@ -80,7 +80,7 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
                             <FaExclamationTriangle className="mx-auto text-2xl text-red-500 border-2 border-red-500 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]" />
                         </div>
             
-                        {/* Componente que gerencia o Socket de vídeo para cada card */}
+                        
                         <div className=" items-center">
                             <h3 className=" text-red-500 font-bold text-center ">Alerta!</h3>
                         </div>
