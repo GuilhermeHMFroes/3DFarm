@@ -142,13 +142,13 @@ const DashboardTab = ({
                     
             {/* Card 4 : Impressoras Ativas */}
             <Card className="border-t-4 border-t-green-500 border-green-500">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 border-b border-green-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-green-400">
                         <FaCog className="animate-spin" /> Imprimindo
                     </h3>
                     <span className="text-3xl font-bold">{activePrinters.length}</span>
                 </div>
-                <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto">
+                <ul className="space-y-2 text-sm text-farm-light-grey/70 max-h-40 overflow-y-auto min-h-96 max-h-96">
                     {activePrinters.map(p => (
                         <li key={p.id} className="flex justify-between items-center border-b border-farm-medium-grey/30 py-2">
                             <div className="flex flex-col truncate pr-2">
@@ -172,14 +172,17 @@ const DashboardTab = ({
     
             {/* Card 5: Impressoras Ociosas */}
             <Card className="border-t-4 border-t-farm-medium-blue border-farm-medium-blue">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 border-b border-blue-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-farm-medium-blue">
-                        <FaCheckCircle /> Ociosas
+                        <FaCheckCircle className="absolute inline-flex animate-ping rounded-full  opacity-75"/> 
+                        <FaCheckCircle className=""/>
+                        
+                        Ociosas
                     </h3>
                     <span className="text-3xl font-bold">{idlePrinters.length}</span>
                 </div>
                       
-                <ul className="space-y-2 max-h-40 overflow-y-auto">
+                <ul className="space-y-2 max-h-40 overflow-y-auto min-h-96 max-h-96">
                     {idlePrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora ociosa.</p>}
                         
                         {idlePrinters.map(p => (
@@ -216,13 +219,13 @@ const DashboardTab = ({
     
             {/* Card 6: Impressoras Desconectadas */}
             <Card className="border-t-4 border-t-red-500 border-red-500">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 border-b border-red-500">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-red-500">
-                        <FaExclamationTriangle /> Desconectadas
+                        <FaExclamationTriangle className="animate-pulse"/> Desconectadas
                     </h3>
                     <span className="text-3xl font-bold">{disconnectedPrinters.length}</span>
                 </div>
-                <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto">
+                <ul className="space-y-1 text-sm text-farm-light-grey/70 max-h-24 overflow-y-auto min-h-96 max-h-96">
                     {disconnectedPrinters.length === 0 && <p className="text-farm-medium-grey text-sm">Nenhuma impressora desconectada.</p>}
     
                     {disconnectedPrinters.map(p => (

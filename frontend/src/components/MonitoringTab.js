@@ -15,7 +15,7 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
     
         {activePrinters.map(printer => (
     
-            <Card key={printer.id} className="overflow-hidden !border-2 !border-green-500 shadow-lg shadow-green-500/20 transition-all hover:scale-105 hover:shadow-lg">
+            <Card key={printer.id} className="overflow-hidden !border-2 !border-green-500 shadow-lg shadow-green-500/20 transition-all hover:scale-105 hover:shadow-lg min-h-96 max-h-96">
                 <div className="flex justify-between items-center mb-2 p-2">
                     <h2 className="border-b-2 border-green-500 font-bold flex items-center gap-3 pb-3 mb-4 mt-">{printer.name}  - Imprimindo</h2>
                     <span className="text-xs text-red-500 ml-2 border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse px-1">
@@ -31,7 +31,7 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
     
         {idlePrinters.map(printer => (
                               
-            <Card key={printer.id} className="overflow-hidden !border-2 !border-blue-500 shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:shadow-lg">
+            <Card key={printer.id} className="overflow-hidden !border-2 !border-blue-500 shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:shadow-lg min-h-96 max-h-96">
                 <div className="flex justify-between items-center mb-2 p-2">
                     <h2 className="border-b-2 border-blue-500 font-bold flex items-center gap-3 pb-3 mb-4 mt-">{printer.name}  - Ociosa</h2>
                     <span className="text-xs text-red-500 ml-2 border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse px-1">
@@ -74,7 +74,7 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
             <div>
                 {disconnectedPrinters.length > 0 && (
 
-                    <Card className="overflow-hidden !border-2 !border-red-500 shadow-lg shadow-red-500/20 transition-all hover:scale-105 hover:shadow-lg">
+                    <Card className="overflow-hidden !border-2 !border-red-500 shadow-lg shadow-red-500/20 transition-all hover:scale-105 hover:shadow-lg min-h-96 max-h-96">
                         <div className="flex items-center text-xl gap-3 justify-between mb-2 p-2">
                             <h2 className="border-b-2 border-red-500 font-bold flex items-center gap-3 pb-3 mb-4 mt-">Impressoras desconectadas</h2>
                             <FaExclamationTriangle className="mx-auto text-2xl text-red-500 border-2 border-red-500 mb-4 animate-pulse shadow-[0_0_50px_rgba(255,0,0,1)]" />
@@ -83,9 +83,10 @@ const MonitoringTab = ({ activePrinters, idlePrinters, disconnectedPrinters, pri
                         
                         <div className=" items-center">
                             <h3 className=" text-red-500 font-bold text-center ">Alerta!</h3>
+                            <h3>Tem {disconnectedPrinters.length} impressoras desconectadas, avise ao adiministrador!</h3>
                         </div>
 
-                        <h3>Tem {disconnectedPrinters.length} impressoras desconectadas, avise ao adiministrador! teste pt2</h3>
+                        
                     </Card>
 
                 )}
